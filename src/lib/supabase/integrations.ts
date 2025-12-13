@@ -125,7 +125,7 @@ export async function sendBroadcast(artistId: string, message: string, segment: 
   if (!fans) return
 
   const phoneNumbers = fans
-    .map(f => f.user?.phoneNumber)
+    .map((f: any) => f.user?.phoneNumber)
     .filter(Boolean) as string[]
 
   // Save broadcast record

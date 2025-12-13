@@ -215,9 +215,9 @@ export default function ArtistPage() {
         )}
 
         {/* Custom Links */}
-        {artist.links.length > 0 && (
+        {artist.links && artist.links.length > 0 && (
           <div className="space-y-3 mb-8">
-            {artist.links.map((link) => (
+            {artist.links?.map((link) => (
               <a
                 key={link.id}
                 href={link.url}
@@ -246,14 +246,14 @@ export default function ArtistPage() {
         )}
 
         {/* Upcoming Events */}
-        {artist.events.length > 0 && (
+        {artist.events && artist.events.length > 0 && (
           <div className="mb-8">
             <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
               <Calendar className="w-6 h-6" />
               Upcoming Events
             </h2>
             <div className="space-y-4">
-              {artist.events.map((event) => (
+              {artist.events?.map((event) => (
                 <Link
                   key={event.id}
                   href={`/events/${event.slug}`}
@@ -282,7 +282,7 @@ export default function ArtistPage() {
                           day: 'numeric',
                         })}
                       </p>
-                      {event.ticketTypes[0] && (
+                      {event.ticketTypes?.[0] && (
                         <p className="text-sm font-semibold mt-2">
                           From KES {event.ticketTypes[0].price.toLocaleString()}
                         </p>
@@ -296,19 +296,19 @@ export default function ArtistPage() {
         )}
 
         {/* Merchandise */}
-        {artist.merchandise.length > 0 && (
+        {artist.merchandise && artist.merchandise.length > 0 && (
           <div className="mb-8">
             <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
               <ShoppingBag className="w-6 h-6" />
               Merch
             </h2>
             <div className="grid grid-cols-2 gap-4">
-              {artist.merchandise.map((item) => (
+              {artist.merchandise?.map((item) => (
                 <div
                   key={item.id}
                   className="bg-white/5 rounded-xl overflow-hidden border border-white/10"
                 >
-                  {item.images[0] && (
+                  {item.images?.[0] && (
                     <div className="relative aspect-square">
                       <Image
                         src={item.images[0]}

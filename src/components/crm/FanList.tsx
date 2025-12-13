@@ -337,5 +337,3 @@ export function FanList({ fans = [] }: FanListProps) {
     </div>
   );
 }
-  )
-}

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { EventCard } from './EventCard';
 import { LocationFilter } from './LocationFilter';
-import { Tabs } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Search, Calendar, TrendingUp, Users } from 'lucide-react';
 
@@ -124,15 +124,16 @@ export function DiscoveryFeed({ events = [], onPurchaseTicket }: DiscoveryFeedPr
       </div>
 
       {/* Tabs */}
-      <Tabs
-        tabs={tabs.map(tab => ({
-          id: tab.id,
-          label: tab.label,
-          icon: tab.icon,
-        }))}
-        activeTab={activeTab}
-        onChange={setActiveTab}
-      />
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList>
+          {tabs.map(tab => (
+            <TabsTrigger key={tab.id} value={tab.id}>
+              <tab.icon className="w-4 h-4 mr-2" />
+              {tab.label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
 
       {/* Location Filter */}
       <LocationFilter

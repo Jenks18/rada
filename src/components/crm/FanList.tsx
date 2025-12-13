@@ -1,12 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { Avatar } from '@/components/ui/avatar';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Tabs } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Crown, Phone, Mail, MessageCircle, Send, Search, Download, Users, TrendingUp } from 'lucide-react';
 
 interface Fan {
@@ -208,7 +208,16 @@ export function FanList({ fans = [] }: FanListProps) {
       </Card>
 
       {/* Tabs */}
-      <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList>
+          {tabs.map(tab => (
+            <TabsTrigger key={tab.id} value={tab.id}>
+              <tab.icon className="w-4 h-4 mr-2" />
+              {tab.label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
 
       {/* Fan List */}
       <div className="space-y-3">
@@ -221,7 +230,10 @@ export function FanList({ fans = [] }: FanListProps) {
             onClick={() => toggleFanSelection(fan.id)}
           >
             <div className="flex items-center gap-4">
-              <Avatar src={fan.avatar} alt={fan.name} size="md" />
+              <Avatar className="h-12 w-12">
+                <AvatarImage src={fan.avatar} alt={fan.name} />
+                <AvatarFallback>{fan.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+              </Avatar>
 
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
@@ -252,7 +264,7 @@ export function FanList({ fans = [] }: FanListProps) {
               {fan.tags.length > 0 && (
                 <div className="flex gap-1 flex-wrap">
                   {fan.tags.slice(0, 2).map((tag, i) => (
-                    <Badge key={i} variant="secondary" className="text-xs">
+                    <Badge key={i} variant="default" className="text-xs">
                       {tag}
                     </Badge>
                   ))}
@@ -292,14 +304,12 @@ export function FanList({ fans = [] }: FanListProps) {
             <div className="space-y-4 mb-6">
               <div>
                 <label className="text-sm font-medium mb-2 block">Message Type</label>
-                <Tabs
-                  tabs={[
-                    { id: 'sms', label: 'SMS' },
-                    { id: 'whatsapp', label: 'WhatsApp' },
-                  ]}
-                  activeTab="whatsapp"
-                  onChange={() => {}}
-                />
+                <Tabs defaultValue="whatsapp">
+                  <TabsList>
+                    <TabsTrigger value="sms">SMS</TabsTrigger>
+                    <TabsTrigger value="whatsapp">WhatsApp</TabsTrigger>
+                  </TabsList>
+                </Tabs>
               </div>
 
               <div>

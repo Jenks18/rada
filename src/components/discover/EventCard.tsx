@@ -2,7 +2,7 @@
 
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Avatar } from '@/components/ui/avatar';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, MapPin, Users, Ticket } from 'lucide-react';
 import { useState } from 'react';
@@ -92,7 +92,7 @@ export function EventCard({ event, onPurchase }: EventCardProps) {
         
         {/* Category Badge */}
         <div className="absolute top-3 left-3">
-          <Badge variant="secondary" className="bg-black/60 text-white border-0">
+          <Badge variant="default" className="bg-black/60 text-white border-0">
             {event.category}
           </Badge>
         </div>
@@ -100,7 +100,7 @@ export function EventCard({ event, onPurchase }: EventCardProps) {
         {/* Almost Sold Out Badge */}
         {isAlmostSoldOut && !isSoldOut && (
           <div className="absolute top-3 right-3">
-            <Badge variant="destructive" className="animate-pulse">
+            <Badge variant="danger" className="animate-pulse">
               🔥 Almost Sold Out
             </Badge>
           </div>
@@ -108,7 +108,7 @@ export function EventCard({ event, onPurchase }: EventCardProps) {
 
         {isSoldOut && (
           <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-            <Badge variant="destructive" className="text-lg px-4 py-2">
+            <Badge variant="danger" className="text-lg px-4 py-2">
               SOLD OUT
             </Badge>
           </div>
@@ -118,7 +118,10 @@ export function EventCard({ event, onPurchase }: EventCardProps) {
       <div className="p-4">
         {/* Artist Info */}
         <div className="flex items-center gap-3 mb-3">
-          <Avatar src={event.artist.image} alt={event.artist.name} size="sm" />
+          <Avatar className="h-10 w-10">
+            <AvatarImage src={event.artist.image} alt={event.artist.name} />
+            <AvatarFallback>{event.artist.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+          </Avatar>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1">
               <span className="font-semibold text-sm truncate">{event.artist.name}</span>
@@ -151,13 +154,10 @@ export function EventCard({ event, onPurchase }: EventCardProps) {
           <div className="flex items-center gap-2 mb-4">
             <div className="flex -space-x-2">
               {event.attendees.slice(0, 3).map((attendee, i) => (
-                <Avatar 
-                  key={i}
-                  src={attendee.image} 
-                  alt={attendee.name}
-                  size="xs"
-                  className="border-2 border-white"
-                />
+                <Avatar key={i} className="h-6 w-6 border-2 border-white">
+                  <AvatarImage src={attendee.image} alt={attendee.name} />
+                  <AvatarFallback>{attendee.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                </Avatar>
               ))}
             </div>
             <span className="text-xs text-gray-600">

@@ -5,8 +5,8 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Tabs } from '@/components/ui/tabs';
-import { Avatar } from '@/components/ui/avatar';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import {
   Upload,
   Download,
@@ -128,7 +128,7 @@ export function DropsManager({ drop, submissions: initialSubmissions = [] }: Dro
               <p className="text-gray-600">{mockDrop.description}</p>
             )}
           </div>
-          <Badge variant={mockDrop.isActive ? 'default' : 'secondary'} className="bg-green-500">
+          <Badge variant={mockDrop.isActive ? 'success' : 'default'}>
             {mockDrop.isActive ? 'Active' : 'Inactive'}
           </Badge>
         </div>
@@ -172,16 +172,14 @@ export function DropsManager({ drop, submissions: initialSubmissions = [] }: Dro
 
       {/* Filters */}
       <div className="flex items-center justify-between">
-        <Tabs
-          tabs={[
-            { id: 'all', label: 'All' },
-            { id: 'pending', label: `Pending (${submissions.filter(s => s.status === 'PENDING').length})` },
-            { id: 'approved', label: 'Approved' },
-            { id: 'rejected', label: 'Rejected' },
-          ]}
-          activeTab={filter}
-          onChange={(tab) => setFilter(tab as any)}
-        />
+        <Tabs value={filter} onValueChange={(val) => setFilter(val as any)}>
+          <TabsList>
+            <TabsTrigger value="all">All</TabsTrigger>
+            <TabsTrigger value="pending">Pending ({submissions.filter(s => s.status === 'PENDING').length})</TabsTrigger>
+            <TabsTrigger value="approved">Approved</TabsTrigger>
+            <TabsTrigger value="rejected">Rejected</TabsTrigger>
+          </TabsList>
+        </Tabs>
 
         <div className="flex gap-2">
           <Button variant="outline" size="sm" className="gap-2">
@@ -287,7 +285,10 @@ function SubmissionCard({ submission, onApprove, onReject, onFeature, index, for
       <div className="p-4">
         {/* User Info */}
         <div className="flex items-center gap-2 mb-3">
-          <Avatar src={submission.user.avatar} alt={submission.user.name} size="sm" />
+          <Avatar className="h-8 w-8">
+            <AvatarImage src={submission.user.avatar} alt={submission.user.name} />
+            <AvatarFallback>{submission.user.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+          </Avatar>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium truncate">
               {submission.user.name}

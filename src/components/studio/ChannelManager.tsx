@@ -1,7 +1,7 @@
 'use client';
 
 import { Card } from '@/components/ui/card';
-import { Tabs } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { 
@@ -198,7 +198,16 @@ export function ChannelManager() {
       </div>
 
       {/* Tabs */}
-      <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList>
+          {tabs.map(tab => (
+            <TabsTrigger key={tab.id} value={tab.id}>
+              <tab.icon className="w-4 h-4 mr-2" />
+              {tab.label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
 
       {/* Overview Tab */}
       {activeTab === 'overview' && (
@@ -268,7 +277,7 @@ export function ChannelManager() {
                   <div className={`p-3 rounded-lg bg-gradient-to-br ${getPlatformColor(stat.platform)}`}>
                     <div className="text-white">{getPlatformIcon(stat.platform)}</div>
                   </div>
-                  <Badge variant={stat.growth > 0 ? 'default' : 'secondary'}>
+                  <Badge variant={stat.growth > 0 ? 'success' : 'default'}>
                     {stat.growth > 0 ? '+' : ''}{stat.growth.toFixed(1)}%
                   </Badge>
                 </div>

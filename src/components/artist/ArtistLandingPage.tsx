@@ -3,7 +3,7 @@
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Avatar } from '@/components/ui/avatar';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { 
   Music2, 
   Youtube, 
@@ -107,12 +107,10 @@ export function ArtistLandingPage({ artist, musicLinks = [], merchandise = [], u
         <div className="flex flex-col md:flex-row items-center md:items-end gap-6 mb-8">
           {/* Avatar */}
           <div className="relative">
-            <Avatar 
-              src={artist.avatar} 
-              alt={artist.name} 
-              size="xl"
-              className="border-4 border-white shadow-xl"
-            />
+            <Avatar className="h-32 w-32 border-4 border-white shadow-xl">
+              <AvatarImage src={artist.avatar} alt={artist.name} />
+              <AvatarFallback>{artist.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+            </Avatar>
             {artist.verified && (
               <div className="absolute bottom-2 right-2 bg-blue-500 rounded-full p-1.5">
                 <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
@@ -279,7 +277,7 @@ export function ArtistLandingPage({ artist, musicLinks = [], merchandise = [], u
                     )}
                     {!item.inStock && (
                       <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                        <Badge variant="secondary">Out of Stock</Badge>
+                        <Badge variant="default">Out of Stock</Badge>
                       </div>
                     )}
                   </div>

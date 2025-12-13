@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Tabs } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Calendar,
   MapPin,
@@ -165,7 +165,16 @@ export function EventTicketingSystem() {
       </div>
 
       {/* Tabs */}
-      <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList>
+          {tabs.map(tab => (
+            <TabsTrigger key={tab.id} value={tab.id}>
+              <tab.icon className="w-4 h-4 mr-2" />
+              {tab.label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
 
       {/* Overview Tab */}
       {activeTab === 'overview' && (
@@ -250,7 +259,7 @@ export function EventTicketingSystem() {
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="font-bold text-lg">{tier.name}</h3>
                     {isSoldOut && (
-                      <Badge variant="destructive">Sold Out</Badge>
+                      <Badge variant="danger">Sold Out</Badge>
                     )}
                   </div>
                   
@@ -334,8 +343,7 @@ export function EventTicketingSystem() {
                     <div className="flex items-center gap-2 mb-1">
                       <h3 className="font-bold">{entry.name}</h3>
                       <Badge 
-                        variant={entry.ticketTier === 'VIP' ? 'default' : 'secondary'}
-                        className={entry.ticketTier === 'VIP' ? 'bg-purple-600' : ''}
+                        variant={entry.ticketTier === 'VIP' ? 'primary' : 'default'}
                       >
                         {entry.ticketTier}
                       </Badge>

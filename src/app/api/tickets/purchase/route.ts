@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Event not found' }, { status: 404 })
     }
 
-    const ticketType = event.ticketTypes.find((tt) => tt.id === ticketTypeId)
+    const ticketType = event.ticket_types?.find((tt: any) => tt.id === ticketTypeId)
 
     if (!ticketType) {
       return NextResponse.json({ error: 'Ticket type not found' }, { status: 404 })

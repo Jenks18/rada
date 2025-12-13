@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { createClient } from '@supabase/supabase-js'
 import { smsService } from '@/lib/sms'
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
 
 /**
  * POST /api/mpesa/callback
@@ -48,34 +53,27 @@ export async function POST(request: NextRequest) {
         // Update all pending tickets for this phone number from the last 10 minutes
         const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000)
 
-        const tickets = await prisma.ticket.findMany({
-          where: {
-            phoneNumber: phoneNumber,
-            paymentStatus: 'PENDING',
-            createdAt: {
-              gte: tenMinutesAgo,
-            },
-          },
-          include: {
-            event: {
-              include: {
-                artist: true,
-              },
-            },
-            ticketType: true,
-            user: true,
-          },
-        })
+        const { data: tickets } = await supabase
+          .from('tickets')
+          .select(`
+            *,
+            event:events(*, artist:artists(*)),
+            ticket_type:ticket_types(*),
+            user:users(*)
+          `)
+          .eq('phone_number', phoneNumber)
+          .eq('payment_status', 'PENDING')
+          .gte('created_at', tenMinutesAgo.toISOString())
 
-        for (const ticket of tickets) {
+        for (const ticket of tickets || []) {
           // Update ticket to COMPLETED
-          await prisma.ticket.update({
-            where: { id: ticket.id },
-            data: {
-              paymentStatus: 'COMPLETED',
-              mpesaCode,
-            },
-          })
+          await supabase
+            .from('tickets')
+            .update({
+              payment_status: 'COMPLETED',
+              mpesa_code: mpesaCode,
+            })
+            .eq('id', ticket.id)
 
           // Update sold count
           await prisma.ticketType.update({
@@ -85,25 +83,13 @@ export async function POST(request: NextRequest) {
                 increment: 1,
               },
             },
+          })supabase.rpc('increment_ticket_type_sold', {
+            ticket_type_id: ticket.ticket_type_id,
           })
 
-          await prisma.event.update({
-            where: { id: ticket.eventId },
-            data: {
-              soldTickets: {
-                increment: 1,
-              },
-              totalRevenue: {
-                increment: ticket.amount,
-              },
-            },
-          })
-
-          // Update or create fan profile
-          await prisma.fanProfile.upsert({
-            where: {
-              userId_artistId: {
-                userId: ticket.userId,
+          await supabase.rpc('increment_event_stats', {
+            event_id: ticket.event_id,
+            amount: ticket.amount   userId: ticket.userId,
                 artistId: ticket.event.artistId,
               },
             },
@@ -119,48 +105,39 @@ export async function POST(request: NextRequest) {
                 increment: ticket.amount,
               },
               ticketsPurchased: {
-                increment: 1,
-              },
-              lastInteraction: new Date(),
-            },
-          })
+          const { data: existingProfile } = await supabase
+            .from('fan_profiles')
+            .select('*')
+            .eq('user_id', ticket.user_id)
+            .eq('artist_id', ticket.event.artist_id)
+            .single()
 
-          // Mark as superfan if they've spent over KES 5000
-          const fanProfile = await prisma.fanProfile.findUnique({
-            where: {
-              userId_artistId: {
-                userId: ticket.userId,
-                artistId: ticket.event.artistId,
-              },
-            },
-          })
-
-          if (fanProfile && fanProfile.totalSpent >= 5000 && !fanProfile.isSuperfan) {
-            await prisma.fanProfile.update({
-              where: { id: fanProfile.id },
-              data: { isSuperfan: true },
-            })
-          }
-
-          // Send SMS with ticket
-          const qrUrl = `https://rada.to/ticket/${ticket.ticketNumber}`
-          await smsService.sendTicket(
-            ticket.phoneNumber,
-            ticket.ticketNumber,
-            ticket.event.title,
-            qrUrl
-          )
-        }
-      }
-    } else {
-      // Payment failed - update tickets
-      // You'd need to track CheckoutRequestID properly in production
-      console.error('M-Pesa payment failed:', ResultDesc)
-    }
-
+          if (existingProfile) {
+            const newTotalSpent = existingProfile.total_spent + ticket.amount
+            await supabase
+              .from('fan_profiles')
+              .update({
+                total_spent: newTotalSpent,
+                tickets_purchased: existingProfile.tickets_purchased + 1,
+                last_interaction: new Date().toISOString(),
+                is_superfan: newTotalSpent >= 5000 ? true : existingProfile.is_superfan,
+              })
+              .eq('id', existingProfile.id)
+          } else {
+            await supabase.from('fan_profiles').insert({
+              user_id: ticket.user_id,
+              artist_id: ticket.event.artist_id,
+              total_spent: ticket.amount,
+              tickets_purchased: 1,
+              last_interaction: new Date().toISOString(),
+              is_superfan: false
     return NextResponse.json({ ResultCode: 0, ResultDesc: 'Success' })
   } catch (error: any) {
     console.error('M-Pesa callback error:', error)
     return NextResponse.json({ ResultCode: 1, ResultDesc: 'Failed' })
   }
 }
+_number}`
+          await smsService.sendTicket(
+            ticket.phone_number,
+            ticket.ticket_n

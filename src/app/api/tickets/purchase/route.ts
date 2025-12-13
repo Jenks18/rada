@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { createClient } from '@supabase/supabase-js'
 import { mpesaService } from '@/lib/mpesa'
 import { generateTicketNumber, generateTicketQR } from '@/lib/tickets'
 import { smsService } from '@/lib/sms'
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
 
 /**
  * POST /api/tickets/purchase
@@ -21,14 +26,16 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Get event and ticket type
-    const event = await prisma.event.findUnique({
-      where: { id: eventId },
-      include: {
-        artist: true,
-        ticketTypes: true,
-      },
-    })
+    // Get event with artist
+    const { data: event, error: eventError } = await supabase
+      .from('events')
+      .select(`
+        *,
+        artist:artists(*),
+        ticket_types:ticket_types(*)
+      `)
+      .eq('id', eventId)
+      .single()
 
     if (!event) {
       return NextResponse.json({ error: 'Event not found' }, { status: 404 })

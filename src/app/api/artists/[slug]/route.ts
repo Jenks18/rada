@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { createClient } from '@supabase/supabase-js'
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
 
 /**
  * GET /api/artists/[slug]
@@ -10,60 +15,62 @@ export async function GET(
   { params }: { params: { slug: string } }
 ) {
   try {
-    const artist = await prisma.artist.findUnique({
-      where: { slug: params.slug },
-      include: {
-        links: {
-          where: { isActive: true },
-          orderBy: { order: 'asc' },
-        },
-        events: {
-          where: {
-            isPublished: true,
-            startDate: {
-              gte: new Date(),
-            },
-          },
-          include: {
-            ticketTypes: {
-              where: { isActive: true },
-            },
-          },
-          orderBy: {
-            startDate: 'asc',
-          },
-        },
-        merchandise: {
-          where: { isActive: true },
-        },
-      },
-    })
+    // Get artist profile
+    const { data: artist, error: artistError } = await supabase
+      .from('artists')
+      .select('*')
+      .eq('slug', params.slug)
+      .single()
 
-    if (!artist) {
+    if (artistError || !artist) {
       return NextResponse.json({ error: 'Artist not found' }, { status: 404 })
     }
 
+    // Get custom links
+    const { data: links } = await supabase
+      .from('custom_links')
+      .select('*')
+      .eq('artist_id', artist.id)
+      .eq('is_active', true)
+      .order('order', { ascending: true })
+
+    // Get upcoming events with ticket types
+    const { data: events } = await supabase
+      .from('events')
+      .select(`
+        *,
+        ticket_types:ticket_types(*)
+      `)
+      .eq('artist_id', artist.id)
+      .eq('is_published', true)
+      .gte('start_date', new Date().toISOString())
+      .order('start_date', { ascending: true })
+
+    // Filter active ticket types
+    const eventsWithActiveTickets = events?.map(event => ({
+      ...event,
+      ticket_types: event.ticket_types?.filter((tt: any) => tt.is_active)
+    }))
+
+    // Get merchandise
+    const { data: merchandise } = await supabase
+      .from('merchandise')
+      .select('*')
+      .eq('artist_id', artist.id)
+      .eq('is_active', true)
+
     // Increment page view
-    await prisma.artist.update({
-      where: { id: artist.id },
-      data: {
-        pageViews: {
-          increment: 1,
-        },
-      },
-    })
+    await supabase
+      .from('artists')
+      .update({ page_views: artist.page_views + 1 })
+      .eq('id', artist.id)
 
-    // Track page view (with IP and user agent if needed)
-    await prisma.pageView.create({
-      data: {
-        artistId: artist.id,
-        ipAddress: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip'),
-        userAgent: request.headers.get('user-agent'),
-        referer: request.headers.get('referer'),
-      },
+    return NextResponse.json({
+      ...artist,
+      links: links || [],
+      events: eventsWithActiveTickets || [],
+      merchandise: merchandise || []
     })
-
-    return NextResponse.json(artist)
   } catch (error: any) {
     console.error('Artist fetch error:', error)
     return NextResponse.json(

@@ -65,11 +65,52 @@ export async function GET(
       .update({ page_views: artist.page_views + 1 })
       .eq('id', artist.id)
 
+    // Transform snake_case to camelCase for frontend
     return NextResponse.json({
-      ...artist,
-      links: links || [],
-      events: eventsWithActiveTickets || [],
-      merchandise: merchandise || []
+      id: artist.id,
+      stageName: artist.stage_name,
+      slug: artist.slug,
+      bio: artist.bio,
+      genre: artist.genre,
+      location: artist.location,
+      coverImage: artist.cover_image,
+      themeColor: artist.theme_color,
+      bookingWhatsApp: artist.booking_whatsapp,
+      instagram: artist.instagram,
+      tiktok: artist.tiktok,
+      twitter: artist.twitter,
+      spotify: artist.spotify,
+      appleMusic: artist.apple_music,
+      youtube: artist.youtube,
+      skizaTuneCode: artist.skiza_tune_code,
+      links: links?.map(link => ({
+        id: link.id,
+        title: link.title,
+        url: link.url,
+        icon: link.icon
+      })) || [],
+      events: eventsWithActiveTickets?.map(event => ({
+        id: event.id,
+        title: event.title,
+        slug: event.slug,
+        coverImage: event.cover_image,
+        venue: event.venue,
+        city: event.city,
+        startDate: event.start_date,
+        ticketTypes: event.ticket_types?.map((tt: any) => ({
+          id: tt.id,
+          name: tt.name,
+          price: tt.price,
+          sold: tt.sold,
+          quantity: tt.quantity
+        })) || []
+      })) || [],
+      merchandise: merchandise?.map(item => ({
+        id: item.id,
+        name: item.name,
+        price: item.price,
+        images: item.images
+      })) || []
     })
   } catch (error: any) {
     console.error('Artist fetch error:', error)

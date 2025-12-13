@@ -72,18 +72,25 @@ export async function POST(request: NextRequest) {
       const ticketNumber = generateTicketNumber()
       const qrCode = await generateTicketQR(eventId, ticketNumber)
 
-      const ticket = await prisma.ticket.create({
-        data: {
-          eventId,
-          ticketTypeId,
-          userId,
-          phoneNumber,
+      const { data: ticket, error: ticketError } = await supabase
+        .from('tickets')
+        .insert({
+          event_id: eventId,
+          ticket_type_id: ticketTypeId,
+          user_id: userId,
+          phone_number: phoneNumber,
           amount: ticketType.price,
-          ticketNumber,
-          qrCode,
-          paymentStatus: 'PENDING',
-        },
-      })
+          ticket_number: ticketNumber,
+          qr_code: qrCode,
+          payment_status: 'PENDING',
+        })
+        .select()
+        .single()
+
+      if (ticketError || !ticket) {
+        console.error('Error creating ticket:', ticketError)
+        throw new Error('Failed to create ticket')
+      }
 
       tickets.push(ticket)
     }
@@ -92,17 +99,17 @@ export async function POST(request: NextRequest) {
     const mpesaResponse = await mpesaService.initiateSTKPush({
       phoneNumber,
       amount: totalAmount,
-      accountReference: `TICKET-${tickets[0].ticketNumber}`,
+      accountReference: `TICKET-${tickets[0].ticket_number}`,
       transactionDesc: `${event.title} - ${ticketType.name}`,
     })
 
     if (!mpesaResponse.success) {
       // Delete pending tickets if payment initiation fails
-      await prisma.ticket.deleteMany({
-        where: {
-          id: { in: tickets.map((t) => t.id) },
-        },
-      })
+      const ticketIds = tickets.map((t) => t.id)
+      await supabase
+        .from('tickets')
+        .delete()
+        .in('id', ticketIds)
 
       return NextResponse.json(
         { error: mpesaResponse.error },

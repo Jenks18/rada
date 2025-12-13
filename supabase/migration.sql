@@ -14,12 +14,6 @@ CREATE TYPE ticket_status AS ENUM ('ACTIVE', 'USED', 'CANCELLED', 'REFUNDED');
 CREATE TYPE submission_status AS ENUM ('PENDING', 'APPROVED', 'REJECTED');
 CREATE TYPE broadcast_status AS ENUM ('DRAFT', 'SCHEDULED', 'SENT', 'FAILED');
 
--- Note: After running this, run: npx prisma db pull
--- This will sync your Prisma schema with Supabase
-
--- Then run: npx prisma generate
--- This generates the Prisma Client
-
 -- Storage Buckets Setup
 -- Run this in Supabase Dashboard > Storage:
 -- 1. Create bucket: avatars (public)

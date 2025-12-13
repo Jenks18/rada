@@ -23,7 +23,7 @@ Rada is an all-in-one digital infrastructure built for modern Kenyan musicians. 
 ## 🏗️ Tech Stack
 
 - **Frontend**: Next.js 14, React, TypeScript, Tailwind CSS
-- **Backend**: Next.js API Routes, Prisma ORM
+- **Backend**: Next.js API Routes, Supabase
 - **Database**: PostgreSQL
 - **Payments**: Safaricom M-Pesa (Daraja API)
 - **SMS**: Africa's Talking
@@ -201,8 +201,9 @@ Superfan identification:
 
 ```
 rada/
-├── prisma/
-│   └── schema.prisma          # Database schema
+├── supabase/
+│   ├── migration.sql          # Database schema
+│   └── functions.sql          # PostgreSQL functions
 ├── src/
 │   ├── app/
 │   │   ├── api/               # API routes
@@ -210,11 +211,15 @@ rada/
 │   │   │   ├── tickets/       # Ticketing endpoints
 │   │   │   └── mpesa/         # M-Pesa callbacks
 │   │   ├── [slug]/            # Dynamic artist pages
-│   │   ├── studio/            # Artist dashboard (TODO)
-│   │   ├── discover/          # Fan discovery feed (TODO)
+│   │   ├── studio/            # Artist dashboard
+│   │   ├── discover/          # Fan discovery feed
 │   │   └── layout.tsx         # Root layout
 │   └── lib/
-│       ├── prisma.ts          # Database client
+│       ├── supabase/          # Supabase utilities
+│       │   ├── client.ts      # Browser client
+│       │   ├── server.ts      # Server client
+│       │   ├── auth.ts        # Authentication
+│       │   └── storage.ts     # File uploads
 │       ├── mpesa.ts           # M-Pesa integration
 │       ├── sms.ts             # SMS service
 │       └── tickets.ts         # Ticket utilities

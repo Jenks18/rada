@@ -36,8 +36,6 @@ Replace the values in `/Users/iannjenga/Desktop/rada/.env.local`:
 NEXT_PUBLIC_SUPABASE_URL=https://xxxxx.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-DATABASE_URL="postgresql://postgres:[YOUR-PASSWORD]@db.xxxxx.supabase.co:5432/postgres?schema=public"
-DIRECT_URL="postgresql://postgres:[YOUR-PASSWORD]@db.xxxxx.supabase.co:5432/postgres?schema=public"
 ```
 
 ## Step 4: Create Storage Buckets
@@ -59,26 +57,16 @@ DIRECT_URL="postgresql://postgres:[YOUR-PASSWORD]@db.xxxxx.supabase.co:5432/post
 3. Paste and click **RUN**
 4. Wait for "Success" message
 
-## Step 6: Push Prisma Schema
+## Step 6: Seed Database (Optional)
 
-In your terminal:
+You can add test data directly in the SQL Editor or through the Supabase Dashboard table editor.
 
-```bash
-cd /Users/iannjenga/Desktop/rada
-npx prisma db push
-npx prisma generate
-```
+For example, to create a test artist:
+1. Go to **Table Editor** > **artists**
+2. Click **Insert row**
+3. Add test data
 
-## Step 7: Seed Database (Optional)
-
-```bash
-npm run db:generate
-npx prisma db seed
-```
-
-This creates test data including the Nviiri artist profile.
-
-## Step 8: Test Locally
+## Step 7: Test Locally
 
 ```bash
 npm run dev
@@ -86,11 +74,10 @@ npm run dev
 
 Visit:
 - http://localhost:3000 (Homepage)
-- http://localhost:3000/nviiri (Artist page - if seeded)
 - http://localhost:3000/discover (Discovery feed)
 - http://localhost:3000/studio (Studio dashboard)
 
-## Step 9: Deploy to Vercel
+## Step 8: Deploy to Vercel
 
 1. Go to [https://vercel.com](https://vercel.com)
 2. Import your GitHub repository
@@ -100,8 +87,6 @@ Visit:
 NEXT_PUBLIC_SUPABASE_URL
 NEXT_PUBLIC_SUPABASE_ANON_KEY
 SUPABASE_SERVICE_ROLE_KEY
-DATABASE_URL
-DIRECT_URL
 MPESA_CONSUMER_KEY (when ready)
 MPESA_CONSUMER_SECRET (when ready)
 AFRICAS_TALKING_API_KEY (when ready)
@@ -109,7 +94,7 @@ AFRICAS_TALKING_API_KEY (when ready)
 
 4. Click **Deploy**
 
-## Step 10: Enable Authentication
+## Step 9: Enable Authentication
 
 In Supabase Dashboard:
 1. Go to **Authentication** > **Providers**
@@ -120,17 +105,16 @@ In Supabase Dashboard:
 ## Troubleshooting
 
 ### "relation does not exist" error
-- Run `npx prisma db push` again
-- Check DATABASE_URL is correct
+- Run the migration.sql in SQL Editor
+- Verify all tables were created in Table Editor
 
 ### "Invalid API key" error
 - Double-check your SUPABASE keys in .env.local
 - Make sure there are no spaces or quotes
 
 ### Can't connect to database
-- Check database password is correct
-- Make sure you replaced [YOUR-PASSWORD] in connection string
-- Try using DIRECT_URL
+- Check that migration.sql was run successfully
+- Verify tables exist in Supabase Dashboard > Table Editor
 
 ## Next Steps
 

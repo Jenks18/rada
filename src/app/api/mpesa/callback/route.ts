@@ -38,10 +38,6 @@ export async function POST(request: NextRequest) {
       mpesaCode = receiptItem?.Value || null
     }
 
-    // Find tickets by account reference (we need to store CheckoutRequestID)
-    // For now, we'll update all PENDING tickets matching the phone number
-    // In production, you'd want to track CheckoutRequestID in the ticket record
-
     if (isSuccess) {
       // Get phone number from callback
       const phoneItem = CallbackMetadata?.Item?.find(
@@ -76,35 +72,16 @@ export async function POST(request: NextRequest) {
             .eq('id', ticket.id)
 
           // Update sold count
-          await prisma.ticketType.update({
-            where: { id: ticket.ticketTypeId },
-            data: {
-              sold: {
-                increment: 1,
-              },
-            },
-          })supabase.rpc('increment_ticket_type_sold', {
+          await supabase.rpc('increment_ticket_type_sold', {
             ticket_type_id: ticket.ticket_type_id,
           })
 
           await supabase.rpc('increment_event_stats', {
             event_id: ticket.event_id,
-            amount: ticket.amount   userId: ticket.userId,
-                artistId: ticket.event.artistId,
-              },
-            },
-            create: {
-              userId: ticket.userId,
-              artistId: ticket.event.artistId,
-              totalSpent: ticket.amount,
-              ticketsPurchased: 1,
-              lastInteraction: new Date(),
-            },
-            update: {
-              totalSpent: {
-                increment: ticket.amount,
-              },
-              ticketsPurchased: {
+            amount: ticket.amount,
+          })
+
+          // Update or create fan profile
           const { data: existingProfile } = await supabase
             .from('fan_profiles')
             .select('*')
@@ -130,14 +107,28 @@ export async function POST(request: NextRequest) {
               total_spent: ticket.amount,
               tickets_purchased: 1,
               last_interaction: new Date().toISOString(),
-              is_superfan: false
+              is_superfan: false,
+            })
+          }
+
+          // Send SMS with ticket
+          const qrUrl = `https://rada.to/ticket/${ticket.ticket_number}`
+          await smsService.sendTicket(
+            ticket.phone_number,
+            ticket.ticket_number,
+            ticket.event.title,
+            qrUrl
+          )
+        }
+      }
+    } else {
+      // Payment failed
+      console.error('M-Pesa payment failed:', ResultDesc)
+    }
+
     return NextResponse.json({ ResultCode: 0, ResultDesc: 'Success' })
   } catch (error: any) {
     console.error('M-Pesa callback error:', error)
     return NextResponse.json({ ResultCode: 1, ResultDesc: 'Failed' })
   }
 }
-_number}`
-          await smsService.sendTicket(
-            ticket.phone_number,
-            ticket.ticket_n

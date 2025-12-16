@@ -83,6 +83,8 @@ export default function DashboardLayout({
           transition-all duration-300 ease-in-out
           ${collapsed ? 'w-16' : 'w-64'}
           ${mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+        `}
+      >
         {/* Header */}
         <div className="h-16 flex items-center justify-between px-4 border-b border-gray-200">
           <Link href="/dashboard" className="flex items-center space-x-2 min-w-0">

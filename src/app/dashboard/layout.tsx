@@ -37,7 +37,7 @@ const navigation: NavSection[] = [
   {
     title: 'Mini Site',
     items: [
-      { title: 'Content', href: '/dashboard/content', icon: <Home size={20} /> },
+      { title: 'Content', href: '/dashboard', icon: <Home size={20} /> },
       { title: 'Header', href: '/dashboard/header', icon: <User size={20} /> },
       { title: 'Social Links', href: '/dashboard/social', icon: <Link2 size={20} /> },
       { title: 'Theme', href: '/dashboard/theme', icon: <Settings size={20} /> },
@@ -50,6 +50,7 @@ const navigation: NavSection[] = [
       { title: 'Email Marketing', href: '/dashboard/email', icon: <MessageSquare size={20} /> },
       { title: 'Analytics', href: '/dashboard/analytics', icon: <BarChart3 size={20} /> },
       { title: 'Settings', href: '/dashboard/settings', icon: <Settings size={20} /> },
+      { title: 'Refer a Friend', href: '/dashboard/refer', icon: <Users size={20} /> },
     ]
   }
 ]

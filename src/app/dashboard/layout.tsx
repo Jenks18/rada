@@ -171,7 +171,20 @@ export default function DashboardLayout({
               </div>
             </div>
           ))}
-        </nav>  <p className="text-xs text-gray-500 truncate">Artist</p>
+        </nav>
+
+        {/* User section */}
+        <div className="border-t border-gray-200 p-3">
+          <div className={`flex items-center space-x-3 ${collapsed ? 'justify-center' : ''}`}>
+            <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center text-white font-semibold">
+              IN
+            </div>
+            {!collapsed && (
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-900 truncate">
+                  Ian Njenga
+                </p>
+                <p className="text-xs text-gray-500 truncate">Artist</p>
               </div>
             )}
             {!collapsed && (

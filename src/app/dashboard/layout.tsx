@@ -28,18 +28,30 @@ interface NavItem {
   badge?: number
 }
 
-const navigation: NavItem[] = [
-  { title: 'Overview', href: '/dashboard', icon: <Home size={20} /> },
-  { title: 'My Profile', href: '/dashboard/profile', icon: <User size={20} /> },
-  { title: 'Custom Links', href: '/dashboard/links', icon: <Link2 size={20} /> },
-  { title: 'Events', href: '/dashboard/events', icon: <Calendar size={20} /> },
-  { title: 'Tickets', href: '/dashboard/tickets', icon: <Ticket size={20} /> },
-  { title: 'Fans', href: '/dashboard/fans', icon: <Users size={20} /> },
-  { title: 'Media', href: '/dashboard/media', icon: <Image size={20} /> },
-  { title: 'Merchandise', href: '/dashboard/merchandise', icon: <DollarSign size={20} /> },
-  { title: 'Broadcasts', href: '/dashboard/broadcasts', icon: <MessageSquare size={20} /> },
-  { title: 'Analytics', href: '/dashboard/analytics', icon: <BarChart3 size={20} /> },
-  { title: 'Settings', href: '/dashboard/settings', icon: <Settings size={20} /> },
+interface NavSection {
+  title: string
+  items: NavItem[]
+}
+
+const navigation: NavSection[] = [
+  {
+    title: 'Mini Site',
+    items: [
+      { title: 'Content', href: '/dashboard/content', icon: <Home size={20} /> },
+      { title: 'Header', href: '/dashboard/header', icon: <User size={20} /> },
+      { title: 'Social Links', href: '/dashboard/social', icon: <Link2 size={20} /> },
+      { title: 'Theme', href: '/dashboard/theme', icon: <Settings size={20} /> },
+    ]
+  },
+  {
+    title: '',
+    items: [
+      { title: 'Monetization', href: '/dashboard/monetization', icon: <DollarSign size={20} /> },
+      { title: 'Email Marketing', href: '/dashboard/email', icon: <MessageSquare size={20} /> },
+      { title: 'Analytics', href: '/dashboard/analytics', icon: <BarChart3 size={20} /> },
+      { title: 'Settings', href: '/dashboard/settings', icon: <Settings size={20} /> },
+    ]
+  }
 ]
 
 export default function DashboardLayout({
@@ -47,7 +59,7 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
-  const [collapsed, setCollapsed] = useState(false)
+  const [collapsed, setCollapsed] = useState(true)
   const [mobileOpen, setMobileOpen] = useState(false)
   const pathname = usePathname()
 
@@ -63,34 +75,21 @@ export default function DashboardLayout({
 
       {/* Sidebar */}
       <aside
+        onMouseEnter={() => setCollapsed(false)}
+        onMouseLeave={() => setCollapsed(true)}
         className={`
           fixed top-0 left-0 h-full bg-white border-r border-gray-200 z-50
           transition-all duration-300 ease-in-out
           ${collapsed ? 'w-16' : 'w-64'}
           ${mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-        `}
-      >
         {/* Header */}
         <div className="h-16 flex items-center justify-between px-4 border-b border-gray-200">
-          {!collapsed && (
-            <Link href="/dashboard" className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-purple-600 to-pink-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">R</span>
-              </div>
-              <span className="font-bold text-xl">Rada</span>
-            </Link>
-          )}
-          
-          {/* Desktop collapse button */}
-          <button
-            onClick={() => setCollapsed(!collapsed)}
-            className="hidden lg:flex p-1.5 hover:bg-gray-100 rounded-lg"
-          >
-            <ChevronLeft
-              size={20}
-              className={`transition-transform ${collapsed ? 'rotate-180' : ''}`}
-            />
-          </button>
+          <Link href="/dashboard" className="flex items-center space-x-2 min-w-0">
+            <div className="w-8 h-8 bg-gradient-to-br from-purple-600 to-pink-600 rounded-lg flex items-center justify-center flex-shrink-0">
+              <span className="text-white font-bold text-sm">R</span>
+            </div>
+            {!collapsed && <span className="font-bold text-xl">Rada</span>}
+          </Link>
 
           {/* Mobile close button */}
           <button
@@ -98,6 +97,8 @@ export default function DashboardLayout({
             className="lg:hidden p-1.5 hover:bg-gray-100 rounded-lg"
           >
             <X size={20} />
+          </button>
+        </div> size={20} />
           </button>
         </div>
 
@@ -114,49 +115,62 @@ export default function DashboardLayout({
                   transition-colors relative group
                   ${isActive 
                     ? 'bg-purple-50 text-purple-600' 
-                    : 'text-gray-700 hover:bg-gray-100'
-                  }
-                  ${collapsed ? 'justify-center' : ''}
-                `}
-                title={collapsed ? item.title : ''}
-              >
-                <span className={isActive ? 'text-purple-600' : 'text-gray-500'}>
-                  {item.icon}
-                </span>
-                {!collapsed && (
-                  <>
-                    <span className="flex-1 font-medium">{item.title}</span>
-                    {item.badge && (
-                      <span className="px-2 py-0.5 text-xs bg-red-500 text-white rounded-full">
-                        {item.badge}
+        {/* Navigation */}
+        <nav className="flex-1 overflow-y-auto p-3">
+          {navigation.map((section, sectionIdx) => (
+            <div key={sectionIdx} className={sectionIdx > 0 ? 'mt-6' : ''}>
+              {section.title && !collapsed && (
+                <div className="px-3 mb-2">
+                  <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    {section.title}
+                  </h3>
+                </div>
+              )}
+              <div className="space-y-1">
+                {section.items.map((item) => {
+                  const isActive = pathname === item.href
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={`
+                        flex items-center space-x-3 px-3 py-2.5 rounded-lg
+                        transition-colors relative group
+                        ${isActive 
+                          ? 'bg-purple-50 text-purple-600' 
+                          : 'text-gray-700 hover:bg-gray-100'
+                        }
+                        ${collapsed ? 'justify-center' : ''}
+                      `}
+                      title={collapsed ? item.title : ''}
+                    >
+                      <span className={isActive ? 'text-purple-600' : 'text-gray-500'}>
+                        {item.icon}
                       </span>
-                    )}
-                  </>
-                )}
+                      {!collapsed && (
+                        <>
+                          <span className="flex-1 font-medium text-sm">{item.title}</span>
+                          {item.badge && (
+                            <span className="px-2 py-0.5 text-xs bg-red-500 text-white rounded-full">
+                              {item.badge}
+                            </span>
+                          )}
+                        </>
+                      )}
 
-                {/* Tooltip for collapsed state */}
-                {collapsed && (
-                  <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity whitespace-nowrap">
-                    {item.title}
-                  </div>
-                )}
-              </Link>
-            )
-          })}
-        </nav>
-
-        {/* User section */}
-        <div className="border-t border-gray-200 p-3">
-          <div className={`flex items-center space-x-3 ${collapsed ? 'justify-center' : ''}`}>
-            <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center text-white font-semibold">
-              IN
+                      {/* Tooltip for collapsed state */}
+                      {collapsed && (
+                        <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity whitespace-nowrap z-50">
+                          {item.title}
+                        </div>
+                      )}
+                    </Link>
+                  )
+                })}
+              </div>
             </div>
-            {!collapsed && (
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 truncate">
-                  Ian Njenga
-                </p>
-                <p className="text-xs text-gray-500 truncate">Artist</p>
+          ))}
+        </nav>  <p className="text-xs text-gray-500 truncate">Artist</p>
               </div>
             )}
             {!collapsed && (

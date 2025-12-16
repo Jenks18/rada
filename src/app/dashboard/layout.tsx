@@ -24,7 +24,7 @@ import {
 interface NavItem {
   title: string
   href: string
-  icon: React.ReactNode
+  icon: any
   badge?: number
 }
 
@@ -32,28 +32,6 @@ interface NavSection {
   title: string
   items: NavItem[]
 }
-
-const navigation: NavSection[] = [
-  {
-    title: 'Mini Site',
-    items: [
-      { title: 'Content', href: '/dashboard', icon: <Home size={20} /> },
-      { title: 'Header', href: '/dashboard/header', icon: <User size={20} /> },
-      { title: 'Social Links', href: '/dashboard/social', icon: <Link2 size={20} /> },
-      { title: 'Theme', href: '/dashboard/theme', icon: <Settings size={20} /> },
-    ]
-  },
-  {
-    title: '',
-    items: [
-      { title: 'Monetization', href: '/dashboard/monetization', icon: <DollarSign size={20} /> },
-      { title: 'Email Marketing', href: '/dashboard/email', icon: <MessageSquare size={20} /> },
-      { title: 'Analytics', href: '/dashboard/analytics', icon: <BarChart3 size={20} /> },
-      { title: 'Settings', href: '/dashboard/settings', icon: <Settings size={20} /> },
-      { title: 'Refer a Friend', href: '/dashboard/refer', icon: <Users size={20} /> },
-    ]
-  }
-]
 
 export default function DashboardLayout({
   children,
@@ -63,6 +41,28 @@ export default function DashboardLayout({
   const [collapsed, setCollapsed] = useState(true)
   const [mobileOpen, setMobileOpen] = useState(false)
   const pathname = usePathname()
+
+  const navigation: NavSection[] = [
+    {
+      title: 'Mini Site',
+      items: [
+        { title: 'Content', href: '/dashboard', icon: Home },
+        { title: 'Header', href: '/dashboard/header', icon: User },
+        { title: 'Social Links', href: '/dashboard/social', icon: Link2 },
+        { title: 'Theme', href: '/dashboard/theme', icon: Settings },
+      ]
+    },
+    {
+      title: '',
+      items: [
+        { title: 'Monetization', href: '/dashboard/monetization', icon: DollarSign },
+        { title: 'Email Marketing', href: '/dashboard/email', icon: MessageSquare },
+        { title: 'Analytics', href: '/dashboard/analytics', icon: BarChart3 },
+        { title: 'Settings', href: '/dashboard/settings', icon: Settings },
+        { title: 'Refer a Friend', href: '/dashboard/refer', icon: Users },
+      ]
+    }
+  ]
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -146,7 +146,7 @@ export default function DashboardLayout({
                       title={collapsed ? item.title : ''}
                     >
                       <span className={isActive ? 'text-purple-600' : 'text-gray-500'}>
-                        {item.icon}
+                        <item.icon size={20} />
                       </span>
                       {!collapsed && (
                         <>

@@ -261,14 +261,14 @@ export default function DashboardLayout({
       {/* Main content */}
       <div
         className={`
-          transition-all duration-300 flex
+          transition-all duration-300 flex h-screen
           ${collapsed ? 'lg:ml-16' : 'lg:ml-64'}
         `}
       >
         {/* Left side content */}
-        <div className={`flex-1 flex flex-col ${showPreview ? 'lg:w-[55%]' : 'w-full'}`}>
+        <div className={`flex flex-col ${showPreview ? 'lg:w-[55%]' : 'w-full'} h-full`}>
           {/* Top bar */}
-          <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 lg:px-6">
+          <header className="h-16 bg-white flex items-center justify-between px-4 lg:px-6 flex-shrink-0">
             <button
               onClick={() => setMobileOpen(true)}
               className="lg:hidden p-2 hover:bg-gray-100 rounded-lg"
@@ -293,14 +293,14 @@ export default function DashboardLayout({
           </header>
 
           {/* Page content */}
-          <main className="flex-1 p-4 lg:p-6 overflow-auto">
+          <main className="flex-1 p-4 lg:p-6 overflow-y-auto bg-gray-50">
             {children}
           </main>
         </div>
 
         {/* Right side preview panel for Mini Site pages */}
         {showPreview && (
-          <div className="hidden lg:block lg:w-[45%] border-l border-gray-200">
+          <div className="hidden lg:block lg:w-[45%] h-full">
             <MiniSitePreview />
           </div>
         )}

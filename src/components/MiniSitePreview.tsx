@@ -34,9 +34,9 @@ export default function MiniSitePreview({
   }
 
   return (
-    <div className="h-full bg-gray-50 flex flex-col">
+    <div className="h-full bg-white flex flex-col">
       {/* Top Bar */}
-      <div className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between">
+      <div className="bg-white px-6 py-3 flex items-center justify-between flex-shrink-0">
         <div className="flex items-center space-x-2 bg-gray-100 rounded-lg px-3 py-1.5">
           <LinkIcon size={14} className="text-gray-400" />
           <span className="text-xs text-gray-600">yazzy.komi.io</span>
@@ -50,7 +50,7 @@ export default function MiniSitePreview({
       </div>
 
       {/* Device Selector */}
-      <div className="flex items-center justify-center py-4 bg-white border-b border-gray-200">
+      <div className="flex items-center justify-center py-4 bg-white flex-shrink-0">
         <div className="bg-gray-100 rounded-lg p-1 inline-flex">
           <button
             onClick={() => setDeviceView('mobile')}
@@ -77,7 +77,7 @@ export default function MiniSitePreview({
       </div>
 
       {/* Preview Window */}
-      <div className="flex-1 flex items-center justify-center p-6 overflow-auto">
+      <div className="flex-1 flex items-center justify-center p-6 overflow-y-auto bg-gray-50">
         <div className={`${getDeviceClass()} transition-all duration-300 bg-white rounded-2xl shadow-2xl overflow-hidden relative`}>
           {/* Preview Badge */}
           <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-white rounded-full px-4 py-2 shadow-lg flex items-center space-x-2 z-50">

@@ -82,11 +82,11 @@ const recentEvents = [
 
 export default function DashboardPage() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Welcome back, Ian! 👋</h1>
-        <p className="text-gray-600 mt-1">Here's what's happening with your artist page</p>
+        <h1 className="text-2xl font-bold text-gray-900">Content</h1>
+        <p className="text-gray-600 mt-1">Manage your mini site modules</p>
       </div>
 
       {/* Stats Grid */}

@@ -261,45 +261,50 @@ export default function DashboardLayout({
       {/* Main content */}
       <div
         className={`
-          transition-all duration-300
+          transition-all duration-300 flex
           ${collapsed ? 'lg:ml-16' : 'lg:ml-64'}
         `}
       >
-        {/* Top bar */}
-        <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 lg:px-6">
-          <button
-            onClick={() => setMobileOpen(true)}
-            className="lg:hidden p-2 hover:bg-gray-100 rounded-lg"
-          >
-            <Menu size={24} />
-          </button>
-
-          <div className="flex items-center space-x-4 ml-auto">
-            <button className="p-2 hover:bg-gray-100 rounded-lg relative">
-              <MessageSquare size={20} className="text-gray-600" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-            </button>
-            
-            <Link
-              href="/artists/iannjenga"
-              target="_blank"
-              className="px-4 py-2 text-sm font-medium text-purple-600 hover:bg-purple-50 rounded-lg"
+        {/* Left side content */}
+        <div className={`flex-1 flex flex-col ${showPreview ? 'lg:w-[55%]' : 'w-full'}`}>
+          {/* Top bar */}
+          <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 lg:px-6">
+            <button
+              onClick={() => setMobileOpen(true)}
+              className="lg:hidden p-2 hover:bg-gray-100 rounded-lg"
             >
-              View Page
-            </Link>
-          </div>
-        </header>
+              <Menu size={24} />
+            </button>
 
-        {/* Page content */}
-        <main className="p-4 lg:p-6">
-          <div className={`${showPreview ? 'lg:mr-[45%]' : ''}`}>
+            <div className="flex items-center space-x-4 ml-auto">
+              <button className="p-2 hover:bg-gray-100 rounded-lg relative">
+                <MessageSquare size={20} className="text-gray-600" />
+                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+              </button>
+              
+              <Link
+                href="/artists/iannjenga"
+                target="_blank"
+                className="px-4 py-2 text-sm font-medium text-purple-600 hover:bg-purple-50 rounded-lg"
+              >
+                View Page
+              </Link>
+            </div>
+          </header>
+
+          {/* Page content */}
+          <main className="flex-1 p-4 lg:p-6 overflow-auto">
             {children}
-          </div>
-        </main>
-      </div>
+          </main>
+        </div>
 
-      {/* Preview Panel for Mini Site pages */}
-      {showPreview && <MiniSitePreview />}
+        {/* Right side preview panel for Mini Site pages */}
+        {showPreview && (
+          <div className="hidden lg:block lg:w-[45%] border-l border-gray-200">
+            <MiniSitePreview />
+          </div>
+        )}
+      </div>
     </div>
   )
 }

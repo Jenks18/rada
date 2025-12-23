@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Palette, Link as LinkIcon } from 'lucide-react'
+import { Palette } from 'lucide-react'
 
 export default function ThemePage() {
   const [themeMode, setThemeMode] = useState<'light' | 'dark' | 'custom'>('light')
@@ -10,25 +10,14 @@ export default function ThemePage() {
   const [overlayMode, setOverlayMode] = useState<'lighten' | 'darken'>('lighten')
 
   return (
-    <div className="max-w-3xl">
-      {/* Top Header Bar */}
-      <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-200">
+    <div className="max-w-2xl space-y-8">
+      {/* Header */}
+      <div>
         <h1 className="text-2xl font-bold text-gray-900">Theme</h1>
-        
-        <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-2 bg-gray-50 rounded-lg px-3 py-2">
-            <LinkIcon size={16} className="text-gray-400" />
-            <span className="text-sm text-gray-600">yazzy.komi.io</span>
-          </div>
-          <span className="text-sm text-gray-500">Saving...</span>
-          <button className="px-6 py-2 bg-gray-900 text-white text-sm font-semibold rounded-lg hover:bg-gray-800 transition-colors">
-            PUBLISH
-          </button>
-        </div>
       </div>
 
       {/* Select Your Theme */}
-      <div className="mb-8">
+      <div>
         <h2 className="text-base font-semibold text-gray-900 mb-3">Select Your Theme</h2>
         <div className="flex items-center space-x-6">
           <button
@@ -70,7 +59,7 @@ export default function ThemePage() {
       </div>
 
       {/* Colors Section */}
-      <div className="mb-8">
+      <div>
         <h2 className="text-base font-semibold text-gray-900 mb-4">Colors</h2>
         
         <div className="space-y-5">

@@ -1,10 +1,23 @@
 'use client'
 
-import Link from 'next/link'
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { Plus } from 'lucide-react'
 
 export default function DashboardPage() {
-  // Empty State - No content yet
+  const router = useRouter()
+  
+  // Check if user has content (in future: check from database)
+  const hasContent = false // TODO: Replace with actual check from Supabase
+
+  useEffect(() => {
+    // If no content, show the modules modal overlay
+    if (!hasContent) {
+      router.push('/dashboard/modules')
+    }
+  }, [hasContent, router])
+
+  // Empty State - Show background content (will be overlaid by /modules)
   return (
     <div className="h-full flex items-center justify-center bg-gray-50">
       <div className="text-center max-w-md mx-auto px-4">
@@ -15,13 +28,13 @@ export default function DashboardPage() {
         <p className="text-gray-600 mb-6">
           Click the button below to get started
         </p>
-        <Link
-          href="/dashboard/modules"
+        <button 
+          onClick={() => router.push('/dashboard/modules')}
           className="inline-flex items-center space-x-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
         >
           <Plus size={20} />
           <span>Add Content</span>
-        </Link>
+        </button>
       </div>
     </div>
   )

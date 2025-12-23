@@ -58,9 +58,6 @@ export default function MiniSitePreview({
             title="Mobile view"
           >
             <Smartphone size={18} className="text-gray-700" />
-            </button>
-          </div>
-        </div>
           </button>
           <button
             onClick={() => setDeviceView('tablet')}

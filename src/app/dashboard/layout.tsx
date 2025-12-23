@@ -19,6 +19,7 @@ import {
   ChevronRight,
   LayoutGrid
 } from 'lucide-react'
+import MiniSitePreview from '@/components/MiniSitePreview'
 
 interface NavItem {
   title: string
@@ -42,6 +43,10 @@ export default function DashboardLayout({
   const [mobileOpen, setMobileOpen] = useState(false)
   const [miniSiteOpen, setMiniSiteOpen] = useState(true)
   const pathname = usePathname()
+
+  // Check if current page is a Mini Site page
+  const miniSitePages = ['/dashboard', '/dashboard/header', '/dashboard/social', '/dashboard/theme']
+  const showPreview = miniSitePages.includes(pathname)
 
   const navigation: NavSection[] = [
     {
@@ -287,9 +292,14 @@ export default function DashboardLayout({
 
         {/* Page content */}
         <main className="p-4 lg:p-6">
-          {children}
+          <div className={`${showPreview ? 'lg:mr-[45%]' : ''}`}>
+            {children}
+          </div>
         </main>
       </div>
+
+      {/* Preview Panel for Mini Site pages */}
+      {showPreview && <MiniSitePreview />}
     </div>
   )
 }

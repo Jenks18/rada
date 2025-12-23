@@ -4,54 +4,54 @@ import { ArrowLeft, Link as LinkIcon, Image, Type, Calendar, DollarSign, FileTex
 import Link from 'next/link'
 
 const contentModules = [
-  { icon: LinkIcon, title: 'External Link', description: 'Link an external website of your choice' },
-  { icon: Image, title: 'Media Gallery', description: 'Showcase your photos and videos' },
-  { icon: Type, title: 'Text', description: 'Add a free text box' },
+  { icon: LinkIcon, title: 'External Link', description: 'Link an external website of your choice', moduleType: 'external-link' },
+  { icon: Image, title: 'Media Gallery', description: 'Showcase your photos and videos', moduleType: 'media-gallery' },
+  { icon: Type, title: 'Text', description: 'Add a free text box', moduleType: 'text' },
 ]
 
 const monetizationModules = [
-  { icon: Calendar, title: '1 to 1 Session', description: 'Sell 1 to 1 experiences, such as coaching sessions' },
-  { icon: FileText, title: 'Course', description: 'Sell your expertise with a course and earn revenue' },
-  { icon: DollarSign, title: 'Affiliate Product', description: 'Earn commission on products you recommend' },
-  { icon: FileText, title: 'Document', description: 'Sell guides, eBooks and PDFs' },
-  { icon: LinkIcon, title: 'Link', description: 'Sell access to any file format' },
-  { icon: Image, title: 'Media File', description: 'Sell images, videos and audio files' },
+  { icon: Calendar, title: '1 to 1 Session', description: 'Sell 1 to 1 experiences, such as coaching sessions', moduleType: '1-to-1-session' },
+  { icon: FileText, title: 'Course', description: 'Sell your expertise with a course and earn revenue', moduleType: 'course' },
+  { icon: DollarSign, title: 'Affiliate Product', description: 'Earn commission on products you recommend', moduleType: 'affiliate-product' },
+  { icon: FileText, title: 'Document', description: 'Sell guides, eBooks and PDFs', moduleType: 'document' },
+  { icon: LinkIcon, title: 'Link', description: 'Sell access to any file format', moduleType: 'link' },
+  { icon: Image, title: 'Media File', description: 'Sell images, videos and audio files', moduleType: 'media-file' },
 ]
 
 const commerceModules = [
-  { icon: ShoppingBag, title: 'Custom Product', description: 'Link your products on an external store' },
+  { icon: ShoppingBag, title: 'Custom Product', description: 'Link your products on an external store', moduleType: 'custom-product' },
 ]
 
 const audioModules = [
-  { icon: Music, title: 'Music', description: 'Smart Link, Pre-Save and Custom Pre-Save' },
-  { icon: Radio, title: 'Podcast', description: 'Add a single or a collection of podcast episodes' },
+  { icon: Music, title: 'Music', description: 'Smart Link, Pre-Save and Custom Pre-Save', moduleType: 'music' },
+  { icon: Radio, title: 'Podcast', description: 'Add a single or a collection of podcast episodes', moduleType: 'podcast' },
 ]
 
 const videoModules = [
-  { icon: Youtube, title: 'YouTube', description: 'Add a single video or a playlist or a channel', iconColor: 'text-red-600' },
-  { icon: Youtube, title: 'YouTube Shorts', description: 'Add a single Short video or a playlist or a channel', iconColor: 'text-red-600' },
-  { icon: Music, title: 'TikTok', description: 'Add videos from a TikTok channel', iconColor: 'text-gray-900' },
+  { icon: Youtube, title: 'YouTube', description: 'Add a single video or a playlist or a channel', iconColor: 'text-red-600', moduleType: 'youtube' },
+  { icon: Youtube, title: 'YouTube Shorts', description: 'Add a single Short video or a playlist or a channel', iconColor: 'text-red-600', moduleType: 'youtube-shorts' },
+  { icon: Music, title: 'TikTok', description: 'Add videos from a TikTok channel', iconColor: 'text-gray-900', moduleType: 'tiktok' },
 ]
 
 const eventModules = [
-  { icon: Ticket, title: 'Custom Event', description: 'Add a link to tickets for your concerts and events' },
-  { icon: Ticket, title: 'BandsInTown', description: 'Link your products on an external store', iconColor: 'text-cyan-500' },
-  { icon: Calendar, title: 'Seated', description: 'Automatically add all your events from Seated', iconColor: 'text-gray-900' },
+  { icon: Ticket, title: 'Custom Event', description: 'Add a link to tickets for your concerts and events', moduleType: 'custom-event' },
+  { icon: Ticket, title: 'BandsInTown', description: 'Link your products on an external store', iconColor: 'text-cyan-500', moduleType: 'bandsintown' },
+  { icon: Calendar, title: 'Seated', description: 'Automatically add all your events from Seated', iconColor: 'text-gray-900', moduleType: 'seated' },
 ]
 
 const dataCaptureModules = [
-  { icon: Mail, title: 'Contact Form', description: 'Create a form for fan and business inquiries' },
-  { icon: FileText, title: 'Free Download', description: 'Give away a free download and collect contact details' },
-  { icon: Mail, title: 'Email/SMS Signup', description: 'Collect fan emails and phone number' },
-  { icon: LinkIcon, title: 'Secret Link', description: 'Give access to exclusive content and collect contact details' },
-  { icon: Tag, title: 'Secret Code', description: 'Give access to exclusive promotions and collect contact details' },
+  { icon: Mail, title: 'Contact Form', description: 'Create a form for fan and business inquiries', moduleType: 'contact-form' },
+  { icon: FileText, title: 'Free Download', description: 'Give away a free download and collect contact details', moduleType: 'free-download' },
+  { icon: Mail, title: 'Email/SMS Signup', description: 'Collect fan emails and phone number', moduleType: 'email-sms-signup' },
+  { icon: LinkIcon, title: 'Secret Link', description: 'Give access to exclusive content and collect contact details', moduleType: 'secret-link' },
+  { icon: Tag, title: 'Secret Code', description: 'Give access to exclusive promotions and collect contact details', moduleType: 'secret-code' },
 ]
 
 const tipsModules = [
-  { icon: CreditCard, title: 'PayPal', description: 'Add your PayPal link', iconColor: 'text-blue-600' },
-  { icon: CreditCard, title: 'Venmo', description: 'Add your Venmo link', iconColor: 'text-blue-500' },
-  { icon: CreditCard, title: 'Cash App', description: 'Add your Cash App link', iconColor: 'text-green-600' },
-  { icon: CreditCard, title: 'Patreon', description: 'Add your Patreon link', iconColor: 'text-orange-600' },
+  { icon: CreditCard, title: 'PayPal', description: 'Add your PayPal link', iconColor: 'text-blue-600', moduleType: 'paypal' },
+  { icon: CreditCard, title: 'Venmo', description: 'Add your Venmo link', iconColor: 'text-blue-500', moduleType: 'venmo' },
+  { icon: CreditCard, title: 'Cash App', description: 'Add your Cash App link', iconColor: 'text-green-600', moduleType: 'cashapp' },
+  { icon: CreditCard, title: 'Patreon', description: 'Add your Patreon link', iconColor: 'text-orange-600', moduleType: 'patreon' },
 ]
 
 interface ModuleCardProps {
@@ -59,11 +59,23 @@ interface ModuleCardProps {
   title: string
   description: string
   iconColor?: string
+  moduleType: string
 }
 
-function ModuleCard({ icon: Icon, title, description, iconColor = 'text-gray-700' }: ModuleCardProps) {
+function ModuleCard({ icon: Icon, title, description, iconColor = 'text-gray-700', moduleType }: ModuleCardProps) {
+  const handleClick = () => {
+    // Store selected module type in localStorage
+    localStorage.setItem('selectedModuleType', moduleType)
+    
+    // Redirect to content page
+    window.location.href = '/dashboard'
+  }
+
   return (
-    <button className="flex items-start space-x-4 p-4 bg-white border-2 border-gray-200 rounded-lg hover:border-gray-400 hover:shadow-md transition-all text-left w-full">
+    <button 
+      onClick={handleClick}
+      className="flex items-start space-x-4 p-4 bg-white border-2 border-gray-200 rounded-lg hover:border-gray-400 hover:shadow-md transition-all text-left w-full"
+    >
       <Icon size={24} className={`flex-shrink-0 mt-1 ${iconColor}`} />
       <div className="flex-1 min-w-0">
         <h3 className="font-semibold text-gray-900 mb-1">{title}</h3>
@@ -75,7 +87,7 @@ function ModuleCard({ icon: Icon, title, description, iconColor = 'text-gray-700
 
 interface ModuleSectionProps {
   title: string
-  modules: Array<{ icon: any; title: string; description: string; iconColor?: string }>
+  modules: Array<{ icon: any; title: string; description: string; iconColor?: string; moduleType: string }>
 }
 
 function ModuleSection({ title, modules }: ModuleSectionProps) {

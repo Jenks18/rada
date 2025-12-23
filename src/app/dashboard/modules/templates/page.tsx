@@ -29,6 +29,16 @@ export default function ModulesTemplatesPage() {
     )
   }
 
+  const handleNext = () => {
+    if (selectedGoals.length === 0) return
+    
+    // Store selected goals in localStorage for the content page to use
+    localStorage.setItem('selectedGoals', JSON.stringify(selectedGoals))
+    
+    // Redirect to content page
+    window.location.href = '/dashboard'
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 p-8 flex items-center justify-center">
       <div className="max-w-4xl w-full">
@@ -79,6 +89,7 @@ export default function ModulesTemplatesPage() {
           </Link>
           
           <button
+            onClick={handleNext}
             disabled={selectedGoals.length === 0}
             className={`
               px-6 py-2.5 rounded-lg font-medium transition-colors

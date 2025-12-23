@@ -1,113 +1,96 @@
 'use client'
 
-import { ArrowLeft } from 'lucide-react'
+import { useState } from 'react'
+import { Music, Youtube, Mail, Ticket, Tag, Radio, Gift, ShoppingBag, MessageSquare } from 'lucide-react'
 import Link from 'next/link'
 
-const templates = [
-  {
-    id: 1,
-    name: 'Musician Starter',
-    description: 'Perfect for artists promoting music and events',
-    modules: ['Social Links', 'Latest Single', 'Upcoming Events', 'Merch'],
-    image: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=400&h=300&fit=crop'
-  },
-  {
-    id: 2,
-    name: 'Event Promoter',
-    description: 'Focus on ticket sales and event details',
-    modules: ['Featured Event', 'Ticket Types', 'Venue Map', 'Contact'],
-    image: 'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=400&h=300&fit=crop'
-  },
-  {
-    id: 3,
-    name: 'Merch Shop',
-    description: 'Showcase and sell your merchandise',
-    modules: ['Featured Products', 'Product Grid', 'Testimonials', 'Social Links'],
-    image: 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=400&h=300&fit=crop'
-  },
-  {
-    id: 4,
-    name: 'Fan Engagement',
-    description: 'Build community with interactive content',
-    modules: ['Fan Wall', 'Challenges', 'Exclusive Content', 'Newsletter'],
-    image: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=400&h=300&fit=crop'
-  }
+const goalOptions = [
+  { icon: Music, label: 'Share your music', id: 'music' },
+  { icon: Youtube, label: 'Share your YouTube videos', id: 'youtube' },
+  { icon: Music, label: 'Share your TikTok videos', id: 'tiktok' },
+  { icon: Mail, label: 'Collect contacts', id: 'contacts' },
+  { icon: Ticket, label: 'Sell your event tickets', id: 'tickets' },
+  { icon: ShoppingBag, label: 'Recommend your favorite products', id: 'products' },
+  { icon: Tag, label: 'Share your discount codes', id: 'discounts' },
+  { icon: Radio, label: 'Share your podcast', id: 'podcast' },
+  { icon: Gift, label: 'Sell your products', id: 'sell-products' },
+  { icon: MessageSquare, label: 'Highlight your brand partners', id: 'partners' },
+  { icon: Mail, label: 'Accept business inquiries', id: 'inquiries' },
 ]
 
 export default function ModulesTemplatesPage() {
+  const [selectedGoals, setSelectedGoals] = useState<string[]>([])
+
+  const toggleGoal = (goalId: string) => {
+    setSelectedGoals(prev => 
+      prev.includes(goalId) 
+        ? prev.filter(id => id !== goalId)
+        : [...prev, goalId]
+    )
+  }
+
   return (
-    <div className="space-y-6 p-6">
-      {/* Header */}
-      <div className="flex items-center space-x-4">
-        <Link
-          href="/dashboard"
-          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-        >
-          <ArrowLeft size={20} className="text-gray-600" />
-        </Link>
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Choose a Template</h1>
-          <p className="text-gray-600 mt-1">Start with a pre-designed layout</p>
+    <div className="min-h-full bg-white p-8">
+      <div className="max-w-4xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            What do you want to do with your mini-site?
+          </h1>
+          <p className="text-gray-600">
+            Select as many options and we'll help you build it.
+          </p>
         </div>
-      </div>
 
-      {/* Templates Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {templates.map((template) => (
-          <div
-            key={template.id}
-            className="bg-white rounded-xl border-2 border-gray-200 overflow-hidden hover:border-purple-600 hover:shadow-lg transition-all cursor-pointer group"
-          >
-            {/* Template Preview Image */}
-            <div className="relative h-48 bg-gray-100 overflow-hidden">
-              <img
-                src={template.image}
-                alt={template.name}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
-            </div>
-
-            {/* Template Info */}
-            <div className="p-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-2">{template.name}</h3>
-              <p className="text-sm text-gray-600 mb-4">{template.description}</p>
-
-              {/* Module Tags */}
-              <div className="flex flex-wrap gap-2 mb-4">
-                {template.modules.map((module, idx) => (
-                  <span
-                    key={idx}
-                    className="px-3 py-1 bg-purple-50 text-purple-700 text-xs font-medium rounded-full"
-                  >
-                    {module}
-                  </span>
-                ))}
-              </div>
-
-              {/* Use Template Button */}
-              <button className="w-full px-4 py-2.5 bg-gray-900 text-white font-semibold rounded-lg hover:bg-gray-800 transition-colors">
-                Use This Template
+        {/* Goal Options Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          {goalOptions.map((option) => {
+            const Icon = option.icon
+            const isSelected = selectedGoals.includes(option.id)
+            
+            return (
+              <button
+                key={option.id}
+                onClick={() => toggleGoal(option.id)}
+                className={`
+                  flex items-center space-x-3 p-4 rounded-lg border-2 transition-all text-left
+                  ${isSelected 
+                    ? 'border-gray-900 bg-gray-50' 
+                    : 'border-gray-200 hover:border-gray-300'
+                  }
+                `}
+              >
+                <Icon size={20} className="text-gray-700 flex-shrink-0" />
+                <span className="text-sm font-medium text-gray-900">
+                  {option.label}
+                </span>
               </button>
-            </div>
-          </div>
-        ))}
-      </div>
+            )
+          })}
+        </div>
 
-      {/* Start from Scratch Option */}
-      <div className="bg-gray-50 rounded-xl border-2 border-dashed border-gray-300 p-8 text-center">
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">
-          Don't see what you're looking for?
-        </h3>
-        <p className="text-gray-600 mb-4">
-          Start with a blank canvas and build exactly what you need
-        </p>
-        <Link
-          href="/dashboard/modules/new"
-          className="inline-flex items-center px-6 py-3 bg-white border-2 border-gray-300 text-gray-900 font-medium rounded-lg hover:border-gray-900 hover:shadow-lg transition-all"
-        >
-          Start from Scratch
-        </Link>
+        {/* Action Buttons */}
+        <div className="flex items-center justify-between pt-6 border-t border-gray-200">
+          <Link
+            href="/dashboard/modules"
+            className="px-6 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+          >
+            Previous
+          </Link>
+          
+          <button
+            disabled={selectedGoals.length === 0}
+            className={`
+              px-6 py-2.5 rounded-lg font-medium transition-colors
+              ${selectedGoals.length > 0
+                ? 'bg-gray-900 text-white hover:bg-gray-800'
+                : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+              }
+            `}
+          >
+            Next
+          </button>
+        </div>
       </div>
     </div>
   )

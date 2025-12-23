@@ -260,38 +260,7 @@ export default function DashboardLayout({
           ${collapsed ? 'lg:ml-16' : 'lg:ml-64'}
         `}
       >
-        {/* Left side content */}
-        <div className="flex flex-col h-full">
-          {/* Top bar */}
-          <header className="h-16 bg-white flex items-center justify-between px-4 lg:px-6 flex-shrink-0">
-            <button
-              onClick={() => setMobileOpen(true)}
-              className="lg:hidden p-2 hover:bg-gray-100 rounded-lg"
-            >
-              <Menu size={24} />
-            </button>
-
-            <div className="flex items-center space-x-4 ml-auto">
-              <button className="p-2 hover:bg-gray-100 rounded-lg relative">
-                <MessageSquare size={20} className="text-gray-600" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-              </button>
-              
-              <Link
-                href="/artists/iannjenga"
-                target="_blank"
-                className="px-4 py-2 text-sm font-medium text-purple-600 hover:bg-purple-50 rounded-lg"
-              >
-                View Page
-              </Link>
-            </div>
-          </header>
-
-          {/* Page content */}
-          <main className="flex-1 overflow-hidden bg-gray-50">
-            {children}
-          </main>
-        </div>
+        {children}
       </div>
     </div>
   )

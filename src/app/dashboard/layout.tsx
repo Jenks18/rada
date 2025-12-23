@@ -19,7 +19,6 @@ import {
   ChevronRight,
   LayoutGrid
 } from 'lucide-react'
-import MiniSitePreview from '@/components/MiniSitePreview'
 
 interface NavItem {
   title: string
@@ -43,10 +42,6 @@ export default function DashboardLayout({
   const [mobileOpen, setMobileOpen] = useState(false)
   const [miniSiteOpen, setMiniSiteOpen] = useState(true)
   const pathname = usePathname()
-
-  // Check if current page is a Mini Site page
-  const miniSitePages = ['/dashboard', '/dashboard/header', '/dashboard/social', '/dashboard/theme']
-  const showPreview = miniSitePages.includes(pathname)
 
   const navigation: NavSection[] = [
     {
@@ -261,12 +256,12 @@ export default function DashboardLayout({
       {/* Main content */}
       <div
         className={`
-          transition-all duration-300 flex h-screen
+          transition-all duration-300 h-screen
           ${collapsed ? 'lg:ml-16' : 'lg:ml-64'}
         `}
       >
         {/* Left side content */}
-        <div className={`flex flex-col ${showPreview ? 'lg:w-[55%]' : 'w-full'} h-full`}>
+        <div className="flex flex-col h-full">
           {/* Top bar */}
           <header className="h-16 bg-white flex items-center justify-between px-4 lg:px-6 flex-shrink-0">
             <button
@@ -293,17 +288,10 @@ export default function DashboardLayout({
           </header>
 
           {/* Page content */}
-          <main className="flex-1 p-4 lg:p-6 overflow-y-auto bg-gray-50">
+          <main className="flex-1 overflow-hidden bg-gray-50">
             {children}
           </main>
         </div>
-
-        {/* Right side preview panel for Mini Site pages */}
-        {showPreview && (
-          <div className="hidden lg:block lg:w-[45%] h-full">
-            <MiniSitePreview />
-          </div>
-        )}
       </div>
     </div>
   )

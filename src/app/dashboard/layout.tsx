@@ -14,7 +14,10 @@ import {
   Menu,
   X,
   User,
-  LogOut
+  LogOut,
+  ChevronDown,
+  ChevronRight,
+  LayoutGrid
 } from 'lucide-react'
 
 interface NavItem {
@@ -22,10 +25,11 @@ interface NavItem {
   href: string
   icon: any
   badge?: number
+  children?: NavItem[]
 }
 
 interface NavSection {
-  title: string
+  title?: string
   items: NavItem[]
 }
 
@@ -36,20 +40,26 @@ export default function DashboardLayout({
 }) {
   const [collapsed, setCollapsed] = useState(true)
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [miniSiteOpen, setMiniSiteOpen] = useState(true)
   const pathname = usePathname()
 
   const navigation: NavSection[] = [
     {
-      title: 'Mini Site',
       items: [
-        { title: 'Content', href: '/dashboard', icon: Home },
-        { title: 'Header', href: '/dashboard/header', icon: User },
-        { title: 'Social Links', href: '/dashboard/social', icon: Link2 },
-        { title: 'Theme', href: '/dashboard/theme', icon: Settings },
+        { 
+          title: 'Mini Site', 
+          href: '/dashboard', 
+          icon: LayoutGrid,
+          children: [
+            { title: 'Content', href: '/dashboard', icon: Home },
+            { title: 'Header', href: '/dashboard/header', icon: User },
+            { title: 'Social Links', href: '/dashboard/social', icon: Link2 },
+            { title: 'Theme', href: '/dashboard/theme', icon: Settings },
+          ]
+        },
       ]
     },
     {
-      title: '',
       items: [
         { title: 'Monetization', href: '/dashboard/monetization', icon: DollarSign },
         { title: 'Email Marketing', href: '/dashboard/email', icon: MessageSquare },
@@ -103,17 +113,80 @@ export default function DashboardLayout({
         <nav className="flex-1 overflow-y-auto p-3">
           {navigation.map((section, sectionIdx) => (
             <div key={sectionIdx} className={sectionIdx > 0 ? 'mt-6' : ''}>
-              {section.title && !collapsed && (
-                <div className="px-3 mb-2">
-                  <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    {section.title}
-                  </h3>
-                </div>
-              )}
               <div className="space-y-1">
                 {section.items.map((item) => {
                   const isActive = pathname === item.href
                   const Icon = item.icon
+                  const isParentActive = item.children?.some(child => pathname === child.href)
+                  
+                  // If item has children (Mini Site dropdown)
+                  if (item.children) {
+                    return (
+                      <div key={item.href}>
+                        <button
+                          onClick={() => setMiniSiteOpen(!miniSiteOpen)}
+                          className={`
+                            w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg
+                            transition-colors relative group
+                            ${isParentActive 
+                              ? 'bg-purple-50 text-purple-600' 
+                              : 'text-gray-700 hover:bg-gray-100'
+                            }
+                            ${collapsed ? 'justify-center' : ''}
+                          `}
+                          title={collapsed ? item.title : ''}
+                        >
+                          <span className={isParentActive ? 'text-purple-600' : 'text-gray-500'}>
+                            <Icon size={20} />
+                          </span>
+                          {!collapsed && (
+                            <>
+                              <span className="flex-1 font-medium text-sm text-left">{item.title}</span>
+                              {miniSiteOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                            </>
+                          )}
+
+                          {/* Tooltip for collapsed state */}
+                          {collapsed && (
+                            <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity whitespace-nowrap z-50">
+                              {item.title}
+                            </div>
+                          )}
+                        </button>
+
+                        {/* Dropdown items */}
+                        {miniSiteOpen && !collapsed && (
+                          <div className="ml-3 mt-1 space-y-1 border-l-2 border-gray-200 pl-3">
+                            {item.children.map((child) => {
+                              const isChildActive = pathname === child.href
+                              const ChildIcon = child.icon
+                              return (
+                                <Link
+                                  key={child.href}
+                                  href={child.href}
+                                  className={`
+                                    flex items-center space-x-3 px-3 py-2 rounded-lg
+                                    transition-colors text-sm
+                                    ${isChildActive 
+                                      ? 'bg-purple-50 text-purple-600' 
+                                      : 'text-gray-600 hover:bg-gray-100'
+                                    }
+                                  `}
+                                >
+                                  <span className={isChildActive ? 'text-purple-600' : 'text-gray-400'}>
+                                    <ChildIcon size={16} />
+                                  </span>
+                                  <span className="font-medium">{child.title}</span>
+                                </Link>
+                              )
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  }
+
+                  // Regular nav item
                   return (
                     <Link
                       key={item.href}

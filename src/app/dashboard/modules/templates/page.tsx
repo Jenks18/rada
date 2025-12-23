@@ -14,7 +14,7 @@ const goalOptions = [
   { icon: Tag, label: 'Share your discount codes', id: 'discounts' },
   { icon: Radio, label: 'Share your podcast', id: 'podcast' },
   { icon: Gift, label: 'Sell your products', id: 'sell-products' },
-  { icon: MessageSquare, label: 'Highlight your brand partners', id: 'partners' },
+  { icon: Radio, label: 'Highlight your brand partners', id: 'partners' },
   { icon: Mail, label: 'Accept business inquiries', id: 'inquiries' },
 ]
 
@@ -30,8 +30,8 @@ export default function ModulesTemplatesPage() {
   }
 
   return (
-    <div className="min-h-full bg-white p-8">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-gray-50 p-8 flex items-center justify-center">
+      <div className="max-w-4xl w-full">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
@@ -53,7 +53,7 @@ export default function ModulesTemplatesPage() {
                 key={option.id}
                 onClick={() => toggleGoal(option.id)}
                 className={`
-                  flex items-center space-x-3 p-4 rounded-lg border-2 transition-all text-left
+                  flex items-center space-x-3 p-4 rounded-lg border-2 transition-all text-left bg-white
                   ${isSelected 
                     ? 'border-gray-900 bg-gray-50' 
                     : 'border-gray-200 hover:border-gray-300'
@@ -73,7 +73,7 @@ export default function ModulesTemplatesPage() {
         <div className="flex items-center justify-between pt-6 border-t border-gray-200">
           <Link
             href="/dashboard/modules"
-            className="px-6 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+            className="px-6 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium bg-white"
           >
             Previous
           </Link>

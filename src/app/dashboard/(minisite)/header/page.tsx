@@ -191,12 +191,12 @@ export default function HeaderPage() {
                 <div 
                   className="absolute bg-white/10 border-4 border-white shadow-lg transition-all duration-200"
                   style={{
-                    width: cropRatio === 'portrait' ? '200px' : 
-                           cropRatio === 'square' ? '260px' : 
-                           '360px',
-                    height: cropRatio === 'portrait' ? '360px' : 
-                            cropRatio === 'square' ? '260px' : 
-                            '200px'
+                    width: cropRatio === 'portrait' ? '180px' : 
+                           cropRatio === 'square' ? '220px' : 
+                           '280px',
+                    height: cropRatio === 'portrait' ? '280px' : 
+                            cropRatio === 'square' ? '220px' : 
+                            '180px'
                   }}
                 >
                   {/* Inner bright area showing selected crop */}

@@ -32,7 +32,7 @@ export default function MiniSiteLayout({
         </div>
 
         {/* Right Preview Panel - 50% - PERSISTENT */}
-        <div className="w-1/2 overflow-y-auto bg-white relative">
+        <div className="w-1/2 bg-gray-100 flex items-center justify-center p-8">
           <MiniSitePreview />
         </div>
       </div>

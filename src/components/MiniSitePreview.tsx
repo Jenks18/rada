@@ -34,9 +34,9 @@ export default function MiniSitePreview({
   }
 
   return (
-    <div className="h-full bg-gray-50 flex items-center justify-center p-6 relative">
+    <div className="w-full h-full flex items-center justify-center">
       {/* Preview Window */}
-      <div className={`${getDeviceClass()} transition-all duration-300 bg-[#121212] rounded-2xl shadow-2xl overflow-hidden relative`}>
+      <div className={`${getDeviceClass()} transition-all duration-300 bg-[#121212] rounded-2xl shadow-2xl overflow-hidden relative max-h-[90vh]`}>
         {/* Mock Artist Page */}
         <div 
           className="w-full h-full flex flex-col relative overflow-y-auto"

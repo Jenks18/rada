@@ -179,13 +179,33 @@ export default function HeaderPage() {
 
             {/* Modal Body */}
             <div className="p-6">
-              {/* Image Preview */}
-              <div className="relative bg-gray-100 rounded-lg overflow-hidden mb-6" style={{ height: '400px' }}>
+              {/* Image Preview with Crop Overlay */}
+              <div className="relative bg-gray-100 rounded-lg overflow-hidden mb-6 flex items-center justify-center" style={{ height: '400px' }}>
                 <img 
                   src={tempImage} 
                   alt="Crop preview" 
                   className="w-full h-full object-contain"
+                  style={{ filter: 'brightness(0.5)' }}
                 />
+                {/* Crop Overlay */}
+                <div 
+                  className="absolute bg-white/10 border-4 border-white shadow-lg transition-all duration-200"
+                  style={{
+                    width: cropRatio === 'portrait' ? `${120 + cropSize * 1.2}px` : 
+                           cropRatio === 'square' ? `${150 + cropSize * 1.5}px` : 
+                           `${180 + cropSize * 1.8}px`,
+                    height: cropRatio === 'portrait' ? `${180 + cropSize * 1.8}px` : 
+                            cropRatio === 'square' ? `${150 + cropSize * 1.5}px` : 
+                            `${120 + cropSize * 1.2}px`
+                  }}
+                >
+                  {/* Inner bright area showing selected crop */}
+                  <div className="absolute inset-0" style={{ 
+                    backgroundImage: `url(${tempImage})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center'
+                  }}></div>
+                </div>
               </div>
 
               {/* Size Slider */}

@@ -43,7 +43,7 @@ export default function MiniSitePreview({
           style={{ backgroundColor }}
         >
           {/* Header with Gradient Background - Tall section */}
-          <div className="relative h-[280px]">
+          <div className="relative h-[280px] bg-[#1e1e1e]">
             {/* Cover Image or Background */}
             {coverImage ? (
               <div className="absolute inset-0">
@@ -52,7 +52,7 @@ export default function MiniSitePreview({
                 <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#121212]/50 to-[#121212]"></div>
               </div>
             ) : (
-              <div className="absolute inset-0 bg-gradient-to-b from-[#1a1a1a] via-[#121212] to-[#121212]"></div>
+              <div className="absolute inset-0 bg-gradient-to-b from-[#2a2a2a] via-[#1e1e1e] to-[#121212]"></div>
             )}
 
             {/* Profile Photo - positioned in the middle/lower part of tall header */}
@@ -75,25 +75,28 @@ export default function MiniSitePreview({
             </div>
           </div>
 
-          {/* Artist Name */}
-          <h1 
-            className="text-4xl font-bold text-center px-4 mt-6 mb-6"
-            style={{ color: textColor }}
-          >
-            {artistName}
-          </h1>
+          {/* Content Section - Darker background for contrast */}
+          <div className="flex-1 bg-[#121212]">
+            {/* Artist Name */}
+            <h1 
+              className="text-4xl font-bold text-center px-4 mt-6 mb-6"
+              style={{ color: textColor }}
+            >
+              {artistName}
+            </h1>
 
-          {/* Social Links Empty State */}
-          <div className="flex justify-center mb-6">
-            <div className="flex flex-col items-center py-3 px-12 rounded-full bg-gray-800/40">
-              <span className="text-white/60 font-semibold text-sm">Social Links</span>
+            {/* Social Links Empty State */}
+            <div className="flex justify-center mb-6">
+              <div className="flex flex-col items-center py-3 px-12 rounded-full bg-[#2a2a2a]">
+                <span className="text-white/70 font-semibold text-sm">Social Links</span>
+              </div>
             </div>
-          </div>
 
-          {/* Add Module Placeholder */}
-          <div className="flex-1 flex items-start justify-center px-6 pt-8 pb-24">
-            <div className="w-full max-w-[85%] bg-gray-800/30 rounded-2xl p-16 text-center">
-              <span className="text-white/50 font-semibold text-sm">Add a module to preview it here</span>
+            {/* Add Module Placeholder */}
+            <div className="flex-1 flex items-start justify-center px-6 pt-8 pb-24">
+              <div className="w-full max-w-[85%] bg-[#1a1a1a] border border-[#2a2a2a] rounded-2xl p-16 text-center">
+                <span className="text-white/50 font-semibold text-sm">Add a module to preview it here</span>
+              </div>
             </div>
           </div>
 

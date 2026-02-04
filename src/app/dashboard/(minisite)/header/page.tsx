@@ -1,12 +1,29 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Plus } from 'lucide-react'
 
 export default function HeaderPage() {
   const [displayMode, setDisplayMode] = useState<'text' | 'logo'>('text')
   const [displayName, setDisplayName] = useState('jkh')
   const [showDisplayName, setShowDisplayName] = useState(true)
+  const [coverImage, setCoverImage] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (file) {
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        setCoverImage(e.target?.result as string)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const handleUploadClick = () => {
+    fileInputRef.current?.click()
+  }
 
   return (
     <div className="max-w-3xl mx-auto p-8 space-y-8">
@@ -16,13 +33,26 @@ export default function HeaderPage() {
         
         <div>
           <label className="block text-sm text-gray-700 mb-2">Upload</label>
-          <div className="border-2 border-red-500 rounded-lg p-8 flex items-center justify-center cursor-pointer hover:bg-gray-50 transition-colors">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleFileUpload}
+            className="hidden"
+          />
+          <div 
+            onClick={handleUploadClick}
+            className="border-2 border-red-500 rounded-lg p-8 flex items-center justify-center cursor-pointer hover:bg-gray-50 transition-colors"
+          >
             <div className="flex items-center space-x-2 text-gray-700">
               <Plus size={20} />
               <span className="font-medium">Upload a file</span>
             </div>
           </div>
-          <button className="text-red-500 text-sm mt-2 hover:underline">
+          <button 
+            onClick={handleUploadClick}
+            className="text-red-500 text-sm mt-2 hover:underline"
+          >
             Upload an image
           </button>
         </div>

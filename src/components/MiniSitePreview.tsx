@@ -86,8 +86,8 @@ export default function MiniSitePreview({
             </h1>
 
             {/* Social Links Empty State */}
-            <div className="flex justify-center mb-6">
-              <div className="flex flex-col items-center py-3 px-16 rounded-full bg-[#2a2a2a]">
+            <div className="flex justify-center mb-6 px-4">
+              <div className="w-full max-w-[90%] flex flex-col items-center py-3 rounded-full bg-[#2a2a2a]">
                 <span className="text-white/70 font-semibold text-sm">Social Links</span>
               </div>
             </div>

@@ -47,32 +47,32 @@ export default function MiniSitePreview({
 
         {/* Mock Artist Page */}
         <div 
-          className="w-full h-full flex flex-col items-center justify-center relative"
+          className="w-full h-full flex flex-col items-center relative"
           style={{ backgroundColor }}
         >
           {/* Cover Image Area */}
           {coverImage ? (
             <img src={coverImage} alt="Cover" className="absolute inset-0 w-full h-full object-cover opacity-30" />
           ) : (
-            <div className="absolute inset-0 bg-gradient-to-br from-purple-600/20 to-pink-600/20"></div>
+            <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900"></div>
           )}
 
           {/* Content */}
-          <div className="relative z-10 flex flex-col items-center space-y-6 px-6">
+          <div className="relative z-10 flex flex-col items-center w-full px-6 pt-12">
             {/* Profile Photo */}
-            <div className="w-20 h-20 bg-gray-600 rounded-full flex items-center justify-center">
+            <div className="w-32 h-32 bg-gray-700 rounded-2xl flex items-center justify-center mb-6">
               {profileImage ? (
-                <img src={profileImage} alt="Profile" className="w-full h-full object-cover rounded-full" />
+                <img src={profileImage} alt="Profile" className="w-full h-full object-cover rounded-2xl" />
               ) : (
-                <svg className="w-10 h-10 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                <svg className="w-16 h-16 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
               )}
             </div>
 
             {/* Artist Name */}
             <h1 
-              className="text-2xl font-bold text-center"
+              className="text-4xl font-bold text-center mb-8 tracking-tight"
               style={{ color: textColor }}
             >
               {artistName}
@@ -80,9 +80,9 @@ export default function MiniSitePreview({
 
             {/* Social Links Button */}
             <button 
-              className="px-6 py-2.5 rounded-lg font-medium transition-colors text-sm"
+              className="w-full max-w-[90%] py-4 rounded-full font-medium transition-all hover:opacity-90 text-base"
               style={{ 
-                backgroundColor: `${textColor}20`,
+                backgroundColor: '#3a3a3a',
                 color: textColor 
               }}
             >
@@ -91,48 +91,39 @@ export default function MiniSitePreview({
 
             {/* Add Module Placeholder */}
             <div 
-              className="mt-8 text-center"
-              style={{ color: `${textColor}60` }}
+              className="mt-auto mb-24 w-full max-w-[90%] bg-gray-800/50 rounded-3xl p-12 text-center backdrop-blur-sm"
+              style={{ marginTop: '3rem' }}
             >
-              <p className="text-xs">Add a module to preview it here</p>
+              <p className="text-lg font-medium" style={{ color: `${textColor}70` }}>
+                Add a module to preview it here
+              </p>
             </div>
           </div>
 
-          {/* Device Frame Icons (for mobile/tablet) */}
-          {deviceView !== 'desktop' && (
-            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-3">
-              <div className="w-8 h-8 rounded bg-white/10"></div>
-              <div className="w-8 h-8 rounded bg-white/10"></div>
-              <div className="w-8 h-8 rounded bg-white/10"></div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Device Selector - Bottom Overlay */}
-      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-50">
-        <div className="bg-white rounded-lg shadow-xl p-1 inline-flex border border-gray-200">
-          <button
-            onClick={() => setDeviceView('mobile')}
-            className={`p-3 rounded transition-colors ${deviceView === 'mobile' ? 'bg-gray-100' : 'hover:bg-gray-50'}`}
-            title="Mobile view"
-          >
-            <Smartphone size={20} className={deviceView === 'mobile' ? 'text-gray-900' : 'text-gray-500'} />
-          </button>
-          <button
-            onClick={() => setDeviceView('tablet')}
-            className={`p-3 rounded transition-colors ${deviceView === 'tablet' ? 'bg-gray-100' : 'hover:bg-gray-50'}`}
-            title="Tablet view"
-          >
-            <Tablet size={20} className={deviceView === 'tablet' ? 'text-gray-900' : 'text-gray-500'} />
-          </button>
-          <button
-            onClick={() => setDeviceView('desktop')}
-            className={`p-3 rounded transition-colors ${deviceView === 'desktop' ? 'bg-gray-100' : 'hover:bg-gray-50'}`}
-            title="Desktop view"
-          >
-            <Monitor size={20} className={deviceView === 'desktop' ? 'text-gray-900' : 'text-gray-500'} />
-          </button>
+          {/* Device Selector Icons - Inside Preview at Bottom */}
+          <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-20 bg-white/10 backdrop-blur-md rounded-full p-2 inline-flex space-x-1">
+            <button
+              onClick={() => setDeviceView('mobile')}
+              className={`p-3 rounded-full transition-all ${deviceView === 'mobile' ? 'bg-white/20' : 'hover:bg-white/10'}`}
+              title="Mobile view"
+            >
+              <Smartphone size={20} className="text-white" />
+            </button>
+            <button
+              onClick={() => setDeviceView('tablet')}
+              className={`p-3 rounded-full transition-all ${deviceView === 'tablet' ? 'bg-white/20' : 'hover:bg-white/10'}`}
+              title="Tablet view"
+            >
+              <Tablet size={20} className="text-white" />
+            </button>
+            <button
+              onClick={() => setDeviceView('desktop')}
+              className={`p-3 rounded-full transition-all ${deviceView === 'desktop' ? 'bg-white/20' : 'hover:bg-white/10'}`}
+              title="Desktop view"
+            >
+              <Monitor size={20} className="text-white" />
+            </button>
+          </div>
         </div>
       </div>
     </div>

@@ -1,18 +1,109 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Plus, X } from 'lucide-react'
+import { useMiniSite } from '@/contexts/MiniSiteContext'
 
 export default function HeaderPage() {
+  const {
+    displayName,
+    setDisplayName,
+    showDisplayName,
+    setShowDisplayName,
+    coverImage,
+    setCoverImage,
+  } = useMiniSite()
+  
   const [displayMode, setDisplayMode] = useState<'text' | 'logo'>('text')
-  const [displayName, setDisplayName] = useState('jkh')
-  const [showDisplayName, setShowDisplayName] = useState(true)
-  const [coverImage, setCoverImage] = useState<string | null>(null)
   const [tempImage, setTempImage] = useState<string | null>(null)
   const [showCropModal, setShowCropModal] = useState(false)
-  const [cropSize, setCropSize] = useState(50)
+  const [cropSize, setCropSize] = useState(0)
   const [cropRatio, setCropRatio] = useState<'portrait' | 'square' | 'landscape'>('portrait')
+  const [imageError, setImageError] = useState<string | null>(null)
+  
+  // Dynamic container dimensions - calculated from image aspect ratio
+  const [containerDims, setContainerDims] = useState({ width: 0, height: 0 })
+  
+  // 2D Dragging State (X and Y)
+  const [offset, setOffset] = useState({ x: 0, y: 0 })
+  const [isDragging, setIsDragging] = useState(false)
+  
+  const dragStartRef = useRef<{ x: number, y: number }>({ x: 0, y: 0 })
+  const initialOffsetRef = useRef<{ x: number, y: number }>({ x: 0, y: 0 })
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Derived Scale: 0 -> 1x, 100 -> 3x
+  const scale = 1 + (cropSize / 100) * 2
+
+  // Max container size - reference uses 592.596px
+  const MAX_CONTAINER_SIZE = 592.596
+
+  // Crop window dimensions (the white border box)
+  const CROP_WIDTH = 273.811
+  
+  const getCropHeight = () => {
+    if (cropRatio === 'portrait') return 342.264
+    if (cropRatio === 'square') return 273.811
+    return 219.049 // landscape
+  }
+
+  // Reset drag position when ratio changes
+  useEffect(() => {
+    setOffset({ x: 0, y: 0 })
+  }, [cropRatio])
+
+  // Calculate container dimensions based on image aspect ratio
+  const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    const { naturalWidth, naturalHeight } = e.currentTarget
+    const aspect = naturalWidth / naturalHeight
+    
+    // Validate minimum size
+    if (naturalWidth < 512 || naturalHeight < 512) {
+      setImageError('Image too small, recommended size is 512 x 512 px')
+    } else {
+      setImageError(null)
+    }
+    
+    let calcWidth, calcHeight
+
+    // If portrait (taller than wide)
+    if (naturalHeight > naturalWidth) {
+      calcHeight = MAX_CONTAINER_SIZE
+      calcWidth = calcHeight * aspect
+      // Example: 592 * 0.8 = 474px
+    } 
+    // If landscape (wider than tall)
+    else {
+      calcWidth = MAX_CONTAINER_SIZE
+      calcHeight = calcWidth / aspect
+      // Example: 592 / 1.25 = 474px
+    }
+
+    setContainerDims({ width: calcWidth, height: calcHeight })
+    setOffset({ x: 0, y: 0 })
+    setCropSize(0)
+  }
+
+  // Clamp offset to prevent white space
+  const clampOffset = (x: number, y: number, currentScale: number) => {
+    const scaledW = containerDims.width * currentScale
+    const scaledH = containerDims.height * currentScale
+    
+    const cropH = getCropHeight()
+
+    const maxOffsetX = Math.max(0, (scaledW - CROP_WIDTH) / 2)
+    const maxOffsetY = Math.max(0, (scaledH - cropH) / 2)
+
+    return {
+      x: Math.max(-maxOffsetX, Math.min(x, maxOffsetX)),
+      y: Math.max(-maxOffsetY, Math.min(y, maxOffsetY))
+    }
+  }
+
+  // Auto-clamp position when zooming or changing ratio
+  useEffect(() => {
+    setOffset(prev => clampOffset(prev.x, prev.y, scale))
+  }, [cropSize, cropRatio, scale, containerDims])
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -43,6 +134,42 @@ export default function HeaderPage() {
     setTempImage(null)
   }
 
+  const handleRemoveImage = () => {
+    setCoverImage(null)
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
+  }
+
+  const handleMouseDown = (e: React.MouseEvent | React.TouchEvent) => {
+    setIsDragging(true)
+    
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY
+    
+    dragStartRef.current = { x: clientX, y: clientY }
+    initialOffsetRef.current = { ...offset }
+  }
+
+  const handleMouseMove = (e: React.MouseEvent | React.TouchEvent) => {
+    if (!isDragging) return
+    
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY
+    
+    const deltaX = clientX - dragStartRef.current.x
+    const deltaY = clientY - dragStartRef.current.y
+    
+    const rawX = initialOffsetRef.current.x + deltaX
+    const rawY = initialOffsetRef.current.y + deltaY
+
+    setOffset(clampOffset(rawX, rawY, scale))
+  }
+
+  const handleMouseUp = () => {
+    setIsDragging(false)
+  }
+
   return (
     <>
       <div className="max-w-3xl mx-auto p-8 space-y-8">
@@ -59,23 +186,51 @@ export default function HeaderPage() {
               onChange={handleFileUpload}
               className="hidden"
             />
-            <div 
-              onClick={handleUploadClick}
-              className="border-2 border-red-500 rounded-lg p-8 flex items-center justify-center cursor-pointer hover:bg-gray-50 transition-colors"
-            >
-              <div className="flex items-center space-x-3 text-gray-700">
-                <div className="w-10 h-10 border-2 border-gray-300 rounded flex items-center justify-center">
-                  <Plus size={20} className="text-gray-700" />
+            
+            {coverImage ? (
+              /* Show uploaded image with remove button */
+              <div className="border-2 border-gray-300 rounded-lg p-4 flex items-center justify-between bg-gray-50">
+                <div className="flex items-center space-x-3">
+                  <div className="w-12 h-12 rounded overflow-hidden bg-gray-200 flex-shrink-0">
+                    <img src={coverImage} alt="Uploaded" className="w-full h-full object-cover" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">
+                      Header Image
+                    </p>
+                    <p className="text-xs text-gray-500">Uploaded</p>
+                  </div>
                 </div>
-                <span className="font-medium">Upload a file</span>
+                <button
+                  onClick={handleRemoveImage}
+                  className="p-1.5 hover:bg-gray-200 rounded-full transition-colors flex-shrink-0"
+                  title="Remove image"
+                >
+                  <X size={18} className="text-gray-600" />
+                </button>
               </div>
-            </div>
-            <button 
-              onClick={handleUploadClick}
-              className="text-red-500 text-sm mt-2 hover:underline"
-            >
-              Upload an image
-            </button>
+            ) : (
+              /* Show upload button */
+              <>
+                <div 
+                  onClick={handleUploadClick}
+                  className="border-2 border-red-500 rounded-lg p-8 flex items-center justify-center cursor-pointer hover:bg-gray-50 transition-colors"
+                >
+                  <div className="flex items-center space-x-3 text-gray-700">
+                    <div className="w-10 h-10 border-2 border-gray-300 rounded flex items-center justify-center">
+                      <Plus size={20} className="text-gray-700" />
+                    </div>
+                    <span className="font-medium">Upload a file</span>
+                  </div>
+                </div>
+                <button 
+                  onClick={handleUploadClick}
+                  className="text-red-500 text-sm mt-2 hover:underline"
+                >
+                  Upload an image
+                </button>
+              </>
+            )}
           </div>
         </div>
 
@@ -149,25 +304,49 @@ export default function HeaderPage() {
             <div>
               <h3 className="text-base font-semibold text-gray-900 mb-2">Logo</h3>
               <p className="text-sm text-gray-600 mb-3">
-                Upload your custom logo image
+                Replace your display name with a custom logo.
               </p>
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 flex items-center justify-center cursor-pointer hover:bg-gray-50 transition-colors">
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-12 flex items-center justify-center cursor-pointer hover:bg-gray-50 transition-colors">
                 <div className="text-center">
-                  <Plus size={24} className="mx-auto text-gray-400 mb-2" />
-                  <span className="text-sm text-gray-600">Upload logo</span>
+                  <div className="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center mx-auto mb-4">
+                    <Plus size={24} className="text-white" />
+                  </div>
+                  <p className="text-base font-semibold text-gray-900 mb-2">Add your Logo</p>
+                  <p className="text-sm text-gray-600 leading-relaxed">
+                    Use an size that's at least 564 pixels<br />
+                    wide and 6MB or less. For best results,<br />
+                    use an image with transparent<br />
+                    background.
+                  </p>
                 </div>
               </div>
+              <p className="text-sm text-red-500 mt-2">Please upload a logo</p>
             </div>
           )}
         </div>
       </div>
 
+      {/* Hidden image to calculate dimensions */}
+      {tempImage && (
+        <img 
+          src={tempImage} 
+          onLoad={handleImageLoad}
+          className="hidden fixed -z-50"
+          alt="dimension calculator" 
+        />
+      )}
+
       {/* Crop Image Modal */}
-      {showCropModal && tempImage && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full">
+      {showCropModal && tempImage && containerDims.width > 0 && (
+        <div 
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto"
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
+          onTouchEnd={handleMouseUp}
+        >
+          <div className="bg-white rounded-xl shadow-2xl w-full my-auto" style={{ maxWidth: '625px' }}>
             {/* Modal Header */}
-            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between bg-white">
               <h2 className="text-xl font-semibold text-gray-900">Crop Image</h2>
               <button
                 onClick={handleCropCancel}
@@ -179,46 +358,86 @@ export default function HeaderPage() {
 
             {/* Modal Body */}
             <div className="p-6">
+              {/* Image size warning */}
+              {imageError && (
+                <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-800">
+                  {imageError}
+                </div>
+              )}
+              
               {/* Image Preview with Crop Overlay */}
-              <div className="relative bg-gray-100 rounded-lg overflow-hidden mb-6 flex items-center justify-center" style={{ height: '400px' }}>
+              <div 
+                className={`relative overflow-hidden rounded-lg shadow-sm mx-auto select-none mb-6 ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+                style={{ 
+                  width: `${containerDims.width}px`, 
+                  height: `${containerDims.height}px`,
+                  backgroundColor: '#1a1a1a'
+                }}
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onTouchStart={handleMouseDown}
+                onTouchMove={handleMouseMove}
+              >
+                {/* Single image (the one being moved) */}
                 <img 
                   src={tempImage} 
-                  alt="Crop preview" 
-                  className="w-full h-full object-contain"
-                  style={{ filter: 'brightness(0.5)' }}
-                />
-                {/* Crop Overlay */}
-                <div 
-                  className="absolute bg-white/10 border-4 border-white shadow-lg transition-all duration-200"
+                  alt="Crop preview"
+                  draggable={false}
                   style={{
-                    width: cropRatio === 'portrait' ? '180px' : 
-                           cropRatio === 'square' ? '220px' : 
-                           '280px',
-                    height: cropRatio === 'portrait' ? '280px' : 
-                            cropRatio === 'square' ? '220px' : 
-                            '180px'
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'contain',
+                    transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})`,
+                    willChange: 'transform',
+                    pointerEvents: 'none'
                   }}
-                >
-                  {/* Inner bright area showing selected crop */}
-                  <div className="absolute inset-0" style={{ 
-                    backgroundImage: `url(${tempImage})`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center'
-                  }}></div>
-                </div>
+                />
+                
+                {/* The shadow overlay trick - creates dimmed background around crop window */}
+                <div 
+                  className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none border-4 border-white"
+                  style={{
+                    width: `${CROP_WIDTH}px`,
+                    height: `${getCropHeight()}px`,
+                    boxShadow: '0 0 0 9999px rgba(107, 114, 128, 0.75)'
+                  }}
+                />
               </div>
 
-              {/* Size Slider */}
+
+              {/* Zoom Slider */}
               <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Size</label>
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={cropSize}
-                  onChange={(e) => setCropSize(Number(e.target.value))}
-                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-gray-900"
-                />
+                <label className="block text-sm font-medium text-gray-700 mb-2">Zoom</label>
+                
+                {/* Custom Slider Container */}
+                <div className="relative h-6 flex items-center select-none touch-none">
+                  
+                  {/* 1. The Rail (Background Line) */}
+                  <div className="absolute w-full h-1 bg-gray-200 rounded-full"></div>
+                  
+                  {/* 2. The Track (Active Progress Line) */}
+                  <div 
+                    className="absolute h-1 bg-black rounded-full"
+                    style={{ width: `${cropSize}%` }}
+                  ></div>
+                  
+                  {/* 3. The Knob (Handle) */}
+                  <div 
+                    className="absolute h-4 w-4 bg-white border border-gray-300 shadow-sm rounded-full cursor-grab"
+                    style={{ left: `${cropSize}%`, transform: 'translateX(-50%)' }}
+                  ></div>
+
+                  {/* 4. The Interactive Input (Invisible Overlay) */}
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    step="1"
+                    value={cropSize}
+                    onChange={(e) => setCropSize(Number(e.target.value))}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  />
+                </div>
               </div>
 
               {/* Ratio Options */}
@@ -263,7 +482,7 @@ export default function HeaderPage() {
             </div>
 
             {/* Modal Footer */}
-            <div className="px-6 py-4 border-t border-gray-200 flex justify-end space-x-3">
+            <div className="px-6 py-4 border-t border-gray-200 flex justify-end space-x-3 bg-white">
               <button
                 onClick={handleCropCancel}
                 className="px-6 py-2.5 bg-gray-200 text-gray-700 font-semibold rounded-full hover:bg-gray-300 transition-colors"

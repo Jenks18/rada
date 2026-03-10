@@ -13,3 +13,4 @@ build
 *~
 .vercel
 *.tsbuildinfo
+.env*.local

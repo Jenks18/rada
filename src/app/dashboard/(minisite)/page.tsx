@@ -2,86 +2,84 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, Music, Youtube, Mail, Calendar, Link as LinkIcon } from 'lucide-react'
-
-interface Module {
-  id: string
-  type: string
-  title: string
-  data?: any
-}
+import { Plus, Music, Youtube, Mail, Calendar, Link as LinkIcon, Trash2, GripVertical } from 'lucide-react'
+import { useMiniSite } from '@/contexts/MiniSiteContext'
 
 export default function DashboardPage() {
   const router = useRouter()
-  const [modules, setModules] = useState<Module[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const { modules, addModule, removeModule, isHydrated } = useMiniSite()
+  const [hasProcessedStorage, setHasProcessedStorage] = useState(false)
 
   useEffect(() => {
+    if (!isHydrated || hasProcessedStorage) return
+
     // Check for selected goals from templates
     const selectedGoalsRaw = localStorage.getItem('selectedGoals')
     if (selectedGoalsRaw) {
       const selectedGoals = JSON.parse(selectedGoalsRaw)
       const prefilledModules = generatePrefilledModules(selectedGoals)
-      setModules(prefilledModules)
+      prefilledModules.forEach((m: any) => addModule(m))
       localStorage.removeItem('selectedGoals')
-      setIsLoading(false)
+      setHasProcessedStorage(true)
       return
     }
 
-    // Check for selected module type from scratch
+    // Check for selected module type from scratch — APPEND, don't replace
     const selectedModuleType = localStorage.getItem('selectedModuleType')
     if (selectedModuleType) {
-      const emptyModule = generateEmptyModule(selectedModuleType)
-      setModules([emptyModule])
+      const newModule = generateEmptyModule(selectedModuleType)
+      addModule(newModule)
       localStorage.removeItem('selectedModuleType')
-      setIsLoading(false)
+      setHasProcessedStorage(true)
       return
     }
 
-    setIsLoading(false)
-  }, [])
+    setHasProcessedStorage(true)
+  }, [isHydrated, hasProcessedStorage])
 
-  const generatePrefilledModules = (goals: string[]): Module[] => {
-    const modulesMap: Record<string, Module> = {
-      'music': {
-        id: 'music-1',
+  const generatePrefilledModules = (goals: string[]) => {
+    const modulesMap: Record<string, (ts: number) => { id: string; type: string; title: string; data: any }> = {
+      'music': (ts) => ({
+        id: `music-${ts}`,
         type: 'music',
         title: '🎵 Latest Single - "Nakupenda"',
         data: { url: 'https://open.spotify.com/track/example', platform: 'Spotify' }
-      },
-      'youtube': {
-        id: 'youtube-1',
+      }),
+      'youtube': (ts) => ({
+        id: `youtube-${ts}`,
         type: 'youtube',
         title: '📹 Latest Music Video',
         data: { url: 'https://youtube.com/watch?v=example', videoId: 'example' }
-      },
-      'tiktok': {
-        id: 'tiktok-1',
+      }),
+      'tiktok': (ts) => ({
+        id: `tiktok-${ts}`,
         type: 'tiktok',
         title: '🎬 TikTok Channel',
         data: { username: '@artistname', url: 'https://tiktok.com/@artistname' }
-      },
-      'contacts': {
-        id: 'contacts-1',
+      }),
+      'contacts': (ts) => ({
+        id: `contacts-${ts}`,
         type: 'contact-form',
         title: '✉️ Get in Touch',
         data: { fields: ['name', 'email', 'message'] }
-      },
-      'tickets': {
-        id: 'tickets-1',
+      }),
+      'tickets': (ts) => ({
+        id: `tickets-${ts}`,
         type: 'custom-event',
         title: '🎤 Upcoming Show - Dec 31',
         data: { eventName: 'New Years Concert', ticketUrl: 'https://example.com/tickets' }
-      },
-      'products': {
-        id: 'products-1',
+      }),
+      'products': (ts) => ({
+        id: `products-${ts}`,
         type: 'affiliate-product',
         title: '⭐ My Favorite Gear',
         data: { items: ['Studio Headphones', 'Microphone', 'Audio Interface'] }
-      },
+      }),
     }
 
-    return goals.map(goal => modulesMap[goal]).filter(Boolean)
+    return goals
+      .map((goal, i) => modulesMap[goal]?.(Date.now() + i))
+      .filter(Boolean)
   }
 
   const generateEmptyModule = (moduleType: string): Module => {
@@ -93,7 +91,7 @@ export default function DashboardPage() {
     }
   }
 
-  if (isLoading) {
+  if (!isHydrated) {
     return (
       <div className="h-full flex items-center justify-center bg-gray-50">
         <div className="text-center">
@@ -163,10 +161,12 @@ export default function DashboardPage() {
                   <p className="text-sm text-gray-500 capitalize">{module.type.replace(/-/g, ' ')}</p>
                 </div>
               </div>
-              <button className="text-gray-400 hover:text-gray-600">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-                </svg>
+              <button 
+                onClick={(e) => { e.stopPropagation(); removeModule(module.id) }}
+                className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                title="Remove module"
+              >
+                <Trash2 size={16} />
               </button>
             </div>
           </div>

@@ -1,8 +1,15 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Plus, X } from 'lucide-react'
+import { Plus, X, Loader2 } from 'lucide-react'
 import { useMiniSite } from '@/contexts/MiniSiteContext'
+import { supabase } from '@/lib/supabase/client'
+import {
+  uploadMiniSiteCover,
+  deleteMiniSiteCover,
+  uploadMiniSiteLogo,
+  deleteMiniSiteLogo,
+} from '@/lib/supabase/storage'
 
 export default function HeaderPage() {
   const {
@@ -10,16 +17,25 @@ export default function HeaderPage() {
     setDisplayName,
     showDisplayName,
     setShowDisplayName,
+    displayMode,
+    setDisplayMode,
     coverImage,
     setCoverImage,
+    logoImage,
+    setLogoImage,
   } = useMiniSite()
-  
-  const [displayMode, setDisplayMode] = useState<'text' | 'logo'>('text')
+  const [userId, setUserId] = useState<string | null>(null)
+
   const [tempImage, setTempImage] = useState<string | null>(null)
   const [showCropModal, setShowCropModal] = useState(false)
   const [cropSize, setCropSize] = useState(0)
   const [cropRatio, setCropRatio] = useState<'portrait' | 'square' | 'landscape'>('portrait')
   const [imageError, setImageError] = useState<string | null>(null)
+  const [logoError, setLogoError] = useState<string | null>(null)
+
+  const [isUploadingCover, setIsUploadingCover] = useState(false)
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false)
+  const [coverUploadError, setCoverUploadError] = useState<string | null>(null)
   
   // Dynamic container dimensions - calculated from image aspect ratio
   const [containerDims, setContainerDims] = useState({ width: 0, height: 0 })
@@ -31,6 +47,16 @@ export default function HeaderPage() {
   const dragStartRef = useRef<{ x: number, y: number }>({ x: 0, y: 0 })
   const initialOffsetRef = useRef<{ x: number, y: number }>({ x: 0, y: 0 })
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const logoInputRef = useRef<HTMLInputElement>(null)
+  // Keep a ref to the selected logo File so we can upload the original
+  const logoFileRef = useRef<File | null>(null)
+
+  // Resolve the current user once on mount
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      setUserId(data.user?.id ?? null)
+    })
+  }, [])
 
   // Derived Scale: 0 -> 1x, 100 -> 3x
   const scale = 1 + (cropSize / 100) * 2
@@ -122,11 +148,62 @@ export default function HeaderPage() {
   }
 
   const handleCropDone = () => {
-    if (tempImage) {
-      setCoverImage(tempImage)
+    if (!tempImage || containerDims.width === 0) return
+    if (!userId) {
+      setCoverUploadError('You must be signed in to upload images.')
+      return
     }
-    setShowCropModal(false)
-    setTempImage(null)
+
+    const img = new Image()
+    img.onload = () => {
+      const cropH = getCropHeight()
+      const containerW = containerDims.width
+      const containerH = containerDims.height
+
+      const cropLeft = (containerW - CROP_WIDTH) / 2
+      const cropTop  = (containerH - cropH) / 2
+
+      const imgLeft  = (cropLeft - containerW / 2 - offset.x) / scale + containerW / 2
+      const imgTop   = (cropTop  - containerH / 2 - offset.y) / scale + containerH / 2
+      const imgCropW = CROP_WIDTH / scale
+      const imgCropH = cropH / scale
+
+      const scaleX = img.naturalWidth  / containerW
+      const scaleY = img.naturalHeight / containerH
+
+      const canvas = document.createElement('canvas')
+      canvas.width  = Math.round(CROP_WIDTH)
+      canvas.height = Math.round(cropH)
+
+      const ctx = canvas.getContext('2d')
+      if (!ctx) return
+
+      ctx.drawImage(
+        img,
+        imgLeft * scaleX, imgTop * scaleY,
+        imgCropW * scaleX, imgCropH * scaleY,
+        0, 0,
+        canvas.width, canvas.height
+      )
+
+      // Convert to Blob and upload to Supabase Storage
+      canvas.toBlob(async (blob) => {
+        if (!blob) return
+        setIsUploadingCover(true)
+        setCoverUploadError(null)
+        try {
+          const url = await uploadMiniSiteCover(userId, blob)
+          setCoverImage(url)
+          setShowCropModal(false)
+          setTempImage(null)
+        } catch {
+          setCoverUploadError('Upload failed — please try again.')
+        } finally {
+          setIsUploadingCover(false)
+        }
+      }, 'image/jpeg', 0.9)
+    }
+    img.src = tempImage
   }
 
   const handleCropCancel = () => {
@@ -134,10 +211,66 @@ export default function HeaderPage() {
     setTempImage(null)
   }
 
-  const handleRemoveImage = () => {
+  const handleRemoveImage = async () => {
     setCoverImage(null)
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ''
+    if (fileInputRef.current) fileInputRef.current.value = ''
+    if (userId) {
+      // Best-effort delete — don't block the UI on it
+      deleteMiniSiteCover(userId).catch(() => null)
+    }
+  }
+
+  const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    if (file.size > 6 * 1024 * 1024) {
+      setLogoError('File size must be 6MB or less')
+      return
+    }
+
+    // Read as data URL only to validate dimensions
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      const img = new Image()
+      img.onload = async () => {
+        if (img.width < 564) {
+          setLogoError('Image must be at least 564 pixels wide')
+          return
+        }
+        if (!userId) {
+          setLogoError('You must be signed in to upload images.')
+          return
+        }
+        setLogoError(null)
+        setIsUploadingLogo(true)
+        try {
+          const url = await uploadMiniSiteLogo(userId, file)
+          setLogoImage(url)
+        } catch {
+          setLogoError('Upload failed — please try again.')
+        } finally {
+          setIsUploadingLogo(false)
+        }
+      }
+      img.src = e.target?.result as string
+    }
+    // Save file ref before the async gap
+    logoFileRef.current = file
+    reader.readAsDataURL(file)
+  }
+
+  const handleLogoClick = () => {
+    logoInputRef.current?.click()
+  }
+
+  const handleRemoveLogo = () => {
+    setLogoImage(null)
+    setLogoError(null)
+    logoFileRef.current = null
+    if (logoInputRef.current) logoInputRef.current.value = ''
+    if (userId) {
+      deleteMiniSiteLogo(userId).catch(() => null)
     }
   }
 
@@ -246,7 +379,7 @@ export default function HeaderPage() {
                 className="sr-only peer"
               />
               <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
-              <span className="ml-2 text-sm font-medium text-green-600">ON</span>
+              <span className={`ml-2 text-sm font-medium ${showDisplayName ? 'text-green-600' : 'text-gray-500'}`}>{showDisplayName ? 'ON' : 'OFF'}</span>
             </label>
           </div>
           
@@ -306,21 +439,86 @@ export default function HeaderPage() {
               <p className="text-sm text-gray-600 mb-3">
                 Replace your display name with a custom logo.
               </p>
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-12 flex items-center justify-center cursor-pointer hover:bg-gray-50 transition-colors">
-                <div className="text-center">
-                  <div className="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center mx-auto mb-4">
-                    <Plus size={24} className="text-white" />
+              <input
+                ref={logoInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleLogoUpload}
+                className="hidden"
+              />
+              
+              {logoImage ? (
+                /* Show uploaded logo with remove button AND replace option */
+                <>
+                  <div className="border-2 border-gray-300 rounded-lg p-4 flex items-center justify-between bg-gray-50">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-12 h-12 rounded overflow-hidden bg-white flex-shrink-0 flex items-center justify-center">
+                        <img src={logoImage} alt="Logo" className="max-w-full max-h-full object-contain" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900 truncate">
+                          Logo Image
+                        </p>
+                        <p className="text-xs text-gray-500">Uploaded</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={handleRemoveLogo}
+                      className="p-1.5 hover:bg-gray-200 rounded-full transition-colors flex-shrink-0"
+                      title="Remove logo"
+                    >
+                      <X size={18} className="text-gray-600" />
+                    </button>
                   </div>
-                  <p className="text-base font-semibold text-gray-900 mb-2">Add your Logo</p>
-                  <p className="text-sm text-gray-600 leading-relaxed">
-                    Use an size that's at least 564 pixels<br />
-                    wide and 6MB or less. For best results,<br />
-                    use an image with transparent<br />
-                    background.
-                  </p>
-                </div>
-              </div>
-              <p className="text-sm text-red-500 mt-2">Please upload a logo</p>
+                  
+                  {/* Replace Logo Section */}
+                  <div className="mt-4">
+                    <div 
+                      onClick={isUploadingLogo ? undefined : handleLogoClick}
+                      className={`border-2 border-dashed border-blue-400 rounded-lg p-8 flex items-center justify-center transition-colors ${isUploadingLogo ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer hover:bg-blue-50'}`}
+                    >
+                      <div className="text-center">
+                        <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center mx-auto mb-3">
+                          {isUploadingLogo ? <Loader2 size={20} className="text-white animate-spin" /> : <Plus size={20} className="text-white" />}
+                        </div>
+                        <p className="text-base font-semibold text-gray-900 mb-1">{isUploadingLogo ? 'Uploading…' : 'Replace Logo'}</p>
+                        <p className="text-sm text-gray-600">
+                          Use an size that's at least 564 pixels<br />
+                          wide and 6MB or less. For best results,<br />
+                          use an image with transparent<br />
+                          background.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                /* Show upload prompt */
+                <>
+                  <div 
+                    onClick={isUploadingLogo ? undefined : handleLogoClick}
+                    className={`border-2 border-dashed border-gray-300 rounded-lg p-12 flex items-center justify-center transition-colors ${isUploadingLogo ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer hover:bg-gray-50'}`}
+                  >
+                    <div className="text-center">
+                      <div className="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center mx-auto mb-4">
+                        {isUploadingLogo ? <Loader2 size={24} className="text-white animate-spin" /> : <Plus size={24} className="text-white" />}
+                      </div>
+                      <p className="text-base font-semibold text-gray-900 mb-2">Add your Logo</p>
+                      <p className="text-sm text-gray-600 leading-relaxed">
+                        Use an size that's at least 564 pixels<br />
+                        wide and 6MB or less. For best results,<br />
+                        use an image with transparent<br />
+                        background.
+                      </p>
+                    </div>
+                  </div>
+                  {logoError ? (
+                    <p className="text-sm text-red-500 mt-2">{logoError}</p>
+                  ) : (
+                    <p className="text-sm text-red-500 mt-2">Please upload a logo</p>
+                  )}
+                </>
+              )}
             </div>
           )}
         </div>
@@ -481,19 +679,29 @@ export default function HeaderPage() {
               </div>
             </div>
 
+            {/* Upload error */}
+            {coverUploadError && (
+              <div className="mx-6 mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+                {coverUploadError}
+              </div>
+            )}
+
             {/* Modal Footer */}
             <div className="px-6 py-4 border-t border-gray-200 flex justify-end space-x-3 bg-white">
               <button
                 onClick={handleCropCancel}
-                className="px-6 py-2.5 bg-gray-200 text-gray-700 font-semibold rounded-full hover:bg-gray-300 transition-colors"
+                disabled={isUploadingCover}
+                className="px-6 py-2.5 bg-gray-200 text-gray-700 font-semibold rounded-full hover:bg-gray-300 transition-colors disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 onClick={handleCropDone}
-                className="px-6 py-2.5 bg-gray-900 text-white font-semibold rounded-full hover:bg-gray-800 transition-colors"
+                disabled={isUploadingCover}
+                className="px-6 py-2.5 bg-gray-900 text-white font-semibold rounded-full hover:bg-gray-800 transition-colors disabled:opacity-60 flex items-center gap-2"
               >
-                Done
+                {isUploadingCover && <Loader2 size={16} className="animate-spin" />}
+                {isUploadingCover ? 'Uploading…' : 'Done'}
               </button>
             </div>
           </div>

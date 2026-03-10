@@ -17,8 +17,14 @@ import {
   LogOut,
   ChevronDown,
   ChevronRight,
-  LayoutGrid
+  LayoutGrid,
+  CreditCard,
+  UserPlus,
+  Puzzle,
+  SlidersHorizontal,
+  Gift,
 } from 'lucide-react'
+import { MiniSiteProvider } from '@/contexts/MiniSiteContext'
 
 interface NavItem {
   title: string
@@ -41,6 +47,7 @@ export default function DashboardLayout({
   const [collapsed, setCollapsed] = useState(true)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [miniSiteOpen, setMiniSiteOpen] = useState(true)
+  const [settingsOpen, setSettingsOpen] = useState(false)
   const pathname = usePathname()
 
   const navigation: NavSection[] = [
@@ -62,16 +69,29 @@ export default function DashboardLayout({
     {
       items: [
         { title: 'Monetization', href: '/dashboard/monetization', icon: DollarSign },
-        { title: 'Email Marketing', href: '/dashboard/email', icon: MessageSquare },
         { title: 'Analytics', href: '/dashboard/analytics', icon: BarChart3 },
-        { title: 'Settings', href: '/dashboard/settings', icon: Settings },
-        { title: 'Refer a Friend', href: '/dashboard/refer', icon: Users },
+        {
+          title: 'Settings',
+          href: '/dashboard/settings',
+          icon: Settings,
+          children: [
+            { title: 'Mini Site', href: '/dashboard/settings/minisite', icon: LayoutGrid },
+            { title: 'Email Marketing', href: '/dashboard/settings/email', icon: MessageSquare },
+            { title: 'Billing & Payments', href: '/dashboard/settings/billing', icon: CreditCard },
+            { title: 'Credits', href: '/dashboard/settings/credits', icon: Gift },
+            { title: 'Team Members', href: '/dashboard/settings/team', icon: Users },
+            { title: 'Integrations', href: '/dashboard/settings/integrations', icon: Puzzle },
+            { title: 'Advanced Settings', href: '/dashboard/settings/advanced', icon: SlidersHorizontal },
+          ]
+        },
+        { title: 'Refer a Friend', href: '/dashboard/refer', icon: UserPlus },
       ]
     }
   ]
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <MiniSiteProvider>
+      <div className="min-h-screen bg-gray-50">
       {/* Mobile overlay */}
       {mobileOpen && (
         <div
@@ -119,12 +139,18 @@ export default function DashboardLayout({
                   const Icon = item.icon
                   const isParentActive = item.children?.some(child => pathname === child.href)
                   
-                  // If item has children (Mini Site dropdown)
+                  // If item has children (Mini Site dropdown or Settings dropdown)
                   if (item.children) {
+                    const isMiniSite = item.title === 'Mini Site'
+                    const isDropdownOpen = isMiniSite ? miniSiteOpen : settingsOpen
+                    const toggleDropdown = isMiniSite
+                      ? () => setMiniSiteOpen(!miniSiteOpen)
+                      : () => setSettingsOpen(!settingsOpen)
+
                     return (
                       <div key={item.href}>
                         <button
-                          onClick={() => setMiniSiteOpen(!miniSiteOpen)}
+                          onClick={toggleDropdown}
                           className={`
                             w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg
                             transition-colors relative group
@@ -142,7 +168,7 @@ export default function DashboardLayout({
                           {!collapsed && (
                             <>
                               <span className="flex-1 font-medium text-sm text-left">{item.title}</span>
-                              {miniSiteOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                              {isDropdownOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
                             </>
                           )}
 
@@ -155,7 +181,7 @@ export default function DashboardLayout({
                         </button>
 
                         {/* Dropdown items */}
-                        {miniSiteOpen && !collapsed && (
+                        {isDropdownOpen && !collapsed && (
                           <div className="ml-3 mt-1 space-y-1 border-l-2 border-gray-200 pl-3">
                             {item.children.map((child) => {
                               const isChildActive = pathname === child.href
@@ -262,6 +288,7 @@ export default function DashboardLayout({
       >
         {children}
       </div>
-    </div>
+      </div>
+    </MiniSiteProvider>
   )
 }

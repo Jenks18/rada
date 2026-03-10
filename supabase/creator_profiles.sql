@@ -59,6 +59,10 @@ ALTER TABLE creator_profiles ENABLE ROW LEVEL SECURITY;
 -- or you can disable RLS and rely on API-level authorization.
 -- For now, we'll allow service role access (which is what the API uses).
 
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS "Service role has full access" ON creator_profiles;
+DROP POLICY IF EXISTS "Public can read published profiles" ON creator_profiles;
+
 -- Allow service role full access
 CREATE POLICY "Service role has full access"
   ON creator_profiles

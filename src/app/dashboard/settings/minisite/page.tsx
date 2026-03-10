@@ -5,7 +5,7 @@ import { useMiniSite } from '@/contexts/MiniSiteContext'
 import { Check, X, Loader2, AlertCircle, ExternalLink } from 'lucide-react'
 
 export default function MiniSiteSettingsPage() {
-  const { username: contextUsername, isPublished, setUsername, setIsPublished } = useMiniSite()
+  const { username: contextUsername, isPublished, setUsername, setIsPublished, publishMiniSite } = useMiniSite()
 
   const [username, setUsernameLocal] = useState('')
   const [talentName, setTalentName] = useState('')
@@ -104,14 +104,13 @@ export default function MiniSiteSettingsPage() {
 
     try {
       if (newStatus === 'Online') {
-        // Attempt to publish
-        const res = await fetch('/api/minisite/publish', { method: 'POST', body: JSON.stringify({}) })
-        if (res.ok) {
+        // Attempt to publish — use context so full minisite data is sent
+        const result = await publishMiniSite()
+        if (result.ok) {
           setProfileStatus('Online')
           setIsPublished(true)
         } else {
-          const data = await res.json()
-          alert(data.error ?? 'Publish failed')
+          alert(result.error ?? 'Publish failed')
         }
       } else {
         // Unpublish

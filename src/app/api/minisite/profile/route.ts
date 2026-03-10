@@ -1,14 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { cookies } from 'next/headers'
 
-function getSupabase(req: NextRequest) {
+function getSupabase() {
+  const cookieStore = cookies()
+  
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       auth: {
         storage: {
-          getItem: (key) => req.cookies.get(key)?.value ?? null,
+          getItem: (key: string) => {
+            return cookieStore.get(key)?.value ?? null
+          },
           setItem: () => {},
           removeItem: () => {},
         },
@@ -19,7 +24,7 @@ function getSupabase(req: NextRequest) {
 
 // GET /api/minisite/profile — return the current user's creator profile
 export async function GET(req: NextRequest) {
-  const supabase = getSupabase(req)
+  const supabase = getSupabase()
   const { data: { user }, error: authErr } = await supabase.auth.getUser()
   if (authErr || !user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -40,7 +45,7 @@ export async function GET(req: NextRequest) {
 
 // POST /api/minisite/profile — upsert profile settings (username, talent_name, currency)
 export async function POST(req: NextRequest) {
-  const supabase = getSupabase(req)
+  const supabase = getSupabase()
   const { data: { user }, error: authErr } = await supabase.auth.getUser()
   if (authErr || !user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

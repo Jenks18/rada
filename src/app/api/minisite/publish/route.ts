@@ -1,14 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { cookies } from 'next/headers'
 
-function getSupabase(req: NextRequest) {
+function getSupabase() {
+  const cookieStore = cookies()
+  
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       auth: {
         storage: {
-          getItem: (key) => req.cookies.get(key)?.value ?? null,
+          getItem: (key: string) => {
+            return cookieStore.get(key)?.value ?? null
+          },
           setItem: () => {},
           removeItem: () => {},
         },
@@ -21,7 +26,7 @@ function getSupabase(req: NextRequest) {
 // Saves the full minisite state snapshot to Supabase and sets is_published = true
 // Also used to "re-publish" (update content of an already-published site).
 export async function POST(req: NextRequest) {
-  const supabase = getSupabase(req)
+  const supabase = getSupabase()
   const { data: { user }, error: authErr } = await supabase.auth.getUser()
   if (authErr || !user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -91,7 +96,7 @@ export async function POST(req: NextRequest) {
 
 // DELETE /api/minisite/publish — unpublish (set is_published = false)
 export async function DELETE(req: NextRequest) {
-  const supabase = getSupabase(req)
+  const supabase = getSupabase()
   const { data: { user }, error: authErr } = await supabase.auth.getUser()
   if (authErr || !user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

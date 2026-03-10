@@ -1,39 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { auth } from '@clerk/nextjs/server'
 import { createClient } from '@supabase/supabase-js'
-import { cookies } from 'next/headers'
 
-function getSupabase() {
-  const cookieStore = cookies()
-  
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      auth: {
-        storage: {
-          getItem: (key: string) => {
-            return cookieStore.get(key)?.value ?? null
-          },
-          setItem: () => {},
-          removeItem: () => {},
-        },
-      },
-    }
-  )
-}
+// Supabase client for database operations only (not auth)
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
 
 // GET /api/minisite/profile — return the current user's creator profile
 export async function GET(req: NextRequest) {
-  const supabase = getSupabase()
-  const { data: { user }, error: authErr } = await supabase.auth.getUser()
-  if (authErr || !user) {
+  const { userId } = await auth()
+  
+  if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   const { data, error } = await supabase
     .from('creator_profiles')
     .select('id, username, talent_name, currency, is_published, minisite_data')
-    .eq('user_id', user.id)
+    .eq('user_id', userId)
     .maybeSingle()
 
   if (error) {
@@ -45,9 +31,9 @@ export async function GET(req: NextRequest) {
 
 // POST /api/minisite/profile — upsert profile settings (username, talent_name, currency)
 export async function POST(req: NextRequest) {
-  const supabase = getSupabase()
-  const { data: { user }, error: authErr } = await supabase.auth.getUser()
-  if (authErr || !user) {
+  const { userId } = await auth()
+  
+  if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -75,7 +61,7 @@ export async function POST(req: NextRequest) {
       .from('creator_profiles')
       .select('user_id')
       .eq('username', username)
-      .neq('user_id', user.id)
+      .neq('user_id', userId)
       .maybeSingle()
 
     if (existing) {
@@ -84,7 +70,7 @@ export async function POST(req: NextRequest) {
   }
 
   const upsertData: Record<string, unknown> = {
-    user_id: user.id,
+    user_id: userId,
     ...(username && { username: username.toLowerCase() }),
     ...(talent_name !== undefined && { talent_name }),
     ...(currency && { currency }),

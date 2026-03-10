@@ -1,10 +1,11 @@
 -- Creator Profiles Migration
 -- Run this in your Supabase SQL Editor after the main migration.sql
+-- Updated to support Clerk authentication (user IDs are strings, not UUIDs)
 
 -- Creator profiles table — one row per authenticated user
 CREATE TABLE IF NOT EXISTS creator_profiles (
   id             UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-  user_id        UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  user_id        TEXT NOT NULL UNIQUE,  -- Clerk user ID (e.g., "user_2a...")
   username       TEXT UNIQUE NOT NULL,
   talent_name    TEXT,
   currency       TEXT NOT NULL DEFAULT 'USD',
@@ -53,27 +54,19 @@ $$;
 -- Row Level Security
 ALTER TABLE creator_profiles ENABLE ROW LEVEL SECURITY;
 
--- Anyone can read a published profile (used by the public artist page)
+-- Note: With Clerk, we don't use auth.uid() since authentication is external.
+-- Instead, RLS policies should be managed at the application level,
+-- or you can disable RLS and rely on API-level authorization.
+-- For now, we'll allow service role access (which is what the API uses).
+
+-- Allow service role full access
+CREATE POLICY "Service role has full access"
+  ON creator_profiles
+  FOR ALL
+  USING (true)
+  WITH CHECK (true);
+
+-- Public can read published profiles (used by the public artist page)
 CREATE POLICY "Public can read published profiles"
   ON creator_profiles FOR SELECT
   USING (is_published = TRUE);
-
--- A creator can always read their own profile (even if unpublished)
-CREATE POLICY "Creator can read own profile"
-  ON creator_profiles FOR SELECT
-  USING (auth.uid() = user_id);
-
--- A creator can insert their own profile
-CREATE POLICY "Creator can insert own profile"
-  ON creator_profiles FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
-
--- A creator can update their own profile
-CREATE POLICY "Creator can update own profile"
-  ON creator_profiles FOR UPDATE
-  USING (auth.uid() = user_id);
-
--- A creator can delete their own profile
-CREATE POLICY "Creator can delete own profile"
-  ON creator_profiles FOR DELETE
-  USING (auth.uid() = user_id);

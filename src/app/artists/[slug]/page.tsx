@@ -333,7 +333,7 @@ export default function ArtistPage() {
         {/* Footer */}
         <div className="text-center pt-8 border-t border-white/10">
           <p className="text-gray-500 text-sm">Powered by Rada</p>
-          <Link href="/signup" className="text-sm text-white/60 hover:text-white">
+          <Link href="/sign-up" className="text-sm text-white/60 hover:text-white">
             Create your own page
           </Link>
         </div>

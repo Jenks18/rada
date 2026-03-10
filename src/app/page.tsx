@@ -9,8 +9,8 @@ export default function HomePage() {
         <nav className="flex justify-between items-center mb-20">
           <div className="text-2xl font-bold">RADA</div>
           <div className="flex gap-6">
-            <Link href="/login" className="hover:text-gray-300">Login</Link>
-            <Link href="/signup" className="bg-white text-black px-6 py-2 rounded-full font-semibold hover:bg-gray-200">
+            <Link href="/sign-in" className="hover:text-gray-300">Login</Link>
+            <Link href="/sign-up" className="bg-white text-black px-6 py-2 rounded-full font-semibold hover:bg-gray-200">
               Get Started
             </Link>
           </div>
@@ -24,7 +24,7 @@ export default function HomePage() {
             Own your audience. Sell out shows via M-Pesa. Look world-class while doing it.
           </p>
           <div className="flex gap-4 justify-center flex-wrap">
-            <Link href="/signup?type=artist" className="bg-white text-black px-8 py-4 rounded-full font-semibold text-lg hover:bg-gray-200">
+            <Link href="/sign-up?type=artist" className="bg-white text-black px-8 py-4 rounded-full font-semibold text-lg hover:bg-gray-200">
               I'm an Artist
             </Link>
             <Link href="/discover" className="border border-white px-8 py-4 rounded-full font-semibold text-lg hover:bg-white hover:text-black">
@@ -97,7 +97,7 @@ export default function HomePage() {
           <p className="text-xl text-gray-700 mb-8">
             Set up your Rada page in minutes. No credit card required.
           </p>
-          <Link href="/signup" className="inline-block bg-black text-white px-12 py-4 rounded-full font-semibold text-lg hover:bg-gray-800">
+          <Link href="/sign-up" className="inline-block bg-black text-white px-12 py-4 rounded-full font-semibold text-lg hover:bg-gray-800">
             Get Started Free
           </Link>
         </div>

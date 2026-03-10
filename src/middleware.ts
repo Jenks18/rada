@@ -1,12 +1,24 @@
+import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-export function middleware(request: NextRequest) {
+const isProtectedRoute = createRouteMatcher([
+  '/dashboard(.*)',
+  '/studio(.*)',
+  '/api/minisite(.*)',
+])
+
+export default clerkMiddleware(async (auth, request: NextRequest) => {
+  // Protect dashboard and studio routes
+  if (isProtectedRoute(request)) {
+    await auth.protect()
+  }
+
+  // Subdomain routing logic
   const hostname = request.headers.get('host') || ''
   const url = request.nextUrl.clone()
 
   // Extract the subdomain from the hostname
-  // hostname examples: "jio.rada.bio", "www.rada.bio", "rada.bio", "localhost:3001"
   const parts = hostname.split('.')
   
   // Check if we're on localhost (development)
@@ -23,14 +35,16 @@ export function middleware(request: NextRequest) {
     // Extract the username (first part of subdomain)
     const username = parts[0]
     
-    // Don't rewrite if already on a dynamic route or dashboard/api paths
+    // Don't rewrite if already on certain paths
     if (
       url.pathname.startsWith('/_next') ||
       url.pathname.startsWith('/api') ||
       url.pathname.startsWith('/dashboard') ||
       url.pathname.startsWith('/discover') ||
       url.pathname.startsWith('/studio') ||
-      url.pathname.startsWith('/artists')
+      url.pathname.startsWith('/artists') ||
+      url.pathname.startsWith('/sign-in') ||
+      url.pathname.startsWith('/sign-up')
     ) {
       return NextResponse.next()
     }
@@ -40,9 +54,8 @@ export function middleware(request: NextRequest) {
     return NextResponse.rewrite(url)
   }
 
-  // For root domain (rada.bio or www.rada.bio), continue normally
   return NextResponse.next()
-}
+})
 
 // Configure which routes the middleware should run on
 export const config = {

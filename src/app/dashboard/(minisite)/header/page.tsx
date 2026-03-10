@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Plus, X, Loader2 } from 'lucide-react'
 import { useMiniSite } from '@/contexts/MiniSiteContext'
-import { supabase } from '@/lib/supabase/client'
+import { useUser } from '@clerk/nextjs'
 import {
   uploadMiniSiteCover,
   deleteMiniSiteCover,
@@ -24,7 +24,8 @@ export default function HeaderPage() {
     logoImage,
     setLogoImage,
   } = useMiniSite()
-  const [userId, setUserId] = useState<string | null>(null)
+  const { user } = useUser()
+  const userId = user?.id ?? null
 
   const [tempImage, setTempImage] = useState<string | null>(null)
   const [showCropModal, setShowCropModal] = useState(false)
@@ -51,16 +52,6 @@ export default function HeaderPage() {
   // Keep a ref to the selected logo File so we can upload the original
   const logoFileRef = useRef<File | null>(null)
 
-  // Resolve the current user once on mount
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      setUserId(data.user?.id ?? null)
-    })
-  }, [])
-
-  // Derived Scale: 0 -> 1x, 100 -> 3x
-  const scale = 1 + (cropSize / 100) * 2
-
   // Max container size - reference uses 592.596px
   const MAX_CONTAINER_SIZE = 592.596
 
@@ -72,6 +63,16 @@ export default function HeaderPage() {
     if (cropRatio === 'square') return 273.811
     return 219.049 // landscape
   }
+
+  // Derived Scale: at 0% the full image fits inside the crop window; at 100% zoomed in 5x
+  const getMinScale = () => {
+    if (containerDims.width === 0 || containerDims.height === 0) return 0.5
+    const cropH = getCropHeight()
+    return Math.min(CROP_WIDTH / containerDims.width, cropH / containerDims.height)
+  }
+  const minScale = getMinScale()
+  const maxScale = Math.max(minScale * 5, 2)
+  const scale = minScale + (cropSize / 100) * (maxScale - minScale)
 
   // Reset drag position when ratio changes
   useEffect(() => {
@@ -160,16 +161,19 @@ export default function HeaderPage() {
       const containerW = containerDims.width
       const containerH = containerDims.height
 
-      const cropLeft = (containerW - CROP_WIDTH) / 2
-      const cropTop  = (containerH - cropH) / 2
+      // Map crop window center to unscaled container coords
+      // CSS: translate(ox, oy) scale(s) with transform-origin center
+      // screen_x = cx + (x - cx)*s + ox  =>  x = cx - ox/s
+      const visibleCenterX = containerW / 2 - offset.x / scale
+      const visibleCenterY = containerH / 2 - offset.y / scale
 
-      const imgLeft  = (cropLeft - containerW / 2 - offset.x) / scale + containerW / 2
-      const imgTop   = (cropTop  - containerH / 2 - offset.y) / scale + containerH / 2
-      const imgCropW = CROP_WIDTH / scale
-      const imgCropH = cropH / scale
+      const srcW = CROP_WIDTH / scale
+      const srcH = cropH / scale
+      const srcX = visibleCenterX - srcW / 2
+      const srcY = visibleCenterY - srcH / 2
 
-      const scaleX = img.naturalWidth  / containerW
-      const scaleY = img.naturalHeight / containerH
+      const pixelScaleX = img.naturalWidth / containerW
+      const pixelScaleY = img.naturalHeight / containerH
 
       const canvas = document.createElement('canvas')
       canvas.width  = Math.round(CROP_WIDTH)
@@ -178,12 +182,28 @@ export default function HeaderPage() {
       const ctx = canvas.getContext('2d')
       if (!ctx) return
 
+      // Fill with background color in case image doesn't fill crop area (min zoom)
+      ctx.fillStyle = '#000'
+      ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+      // Clamp source coordinates to image bounds
+      const clampedSrcX = Math.max(0, srcX * pixelScaleX)
+      const clampedSrcY = Math.max(0, srcY * pixelScaleY)
+      const clampedSrcW = Math.min(img.naturalWidth - clampedSrcX, srcW * pixelScaleX)
+      const clampedSrcH = Math.min(img.naturalHeight - clampedSrcY, srcH * pixelScaleY)
+
+      // Calculate destination offset if image doesn't fill crop area
+      const destX = srcX < 0 ? (-srcX / srcW) * canvas.width : 0
+      const destY = srcY < 0 ? (-srcY / srcH) * canvas.height : 0
+      const destW = (clampedSrcW / (srcW * pixelScaleX)) * canvas.width
+      const destH = (clampedSrcH / (srcH * pixelScaleY)) * canvas.height
+
       ctx.drawImage(
         img,
-        imgLeft * scaleX, imgTop * scaleY,
-        imgCropW * scaleX, imgCropH * scaleY,
-        0, 0,
-        canvas.width, canvas.height
+        clampedSrcX, clampedSrcY,
+        clampedSrcW, clampedSrcH,
+        destX, destY,
+        destW, destH
       )
 
       // Convert to Blob and upload to Supabase Storage

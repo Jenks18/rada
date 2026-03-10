@@ -11,7 +11,12 @@ const isProtectedRoute = createRouteMatcher([
 export default clerkMiddleware(async (auth, request: NextRequest) => {
   // Protect dashboard and studio routes
   if (isProtectedRoute(request)) {
-    await auth.protect()
+    const { userId } = await auth()
+    if (!userId) {
+      const signInUrl = new URL('/sign-in', request.url)
+      signInUrl.searchParams.set('redirect_url', request.url)
+      return NextResponse.redirect(signInUrl)
+    }
   }
 
   // Subdomain routing logic
@@ -60,13 +65,7 @@ export default clerkMiddleware(async (auth, request: NextRequest) => {
 // Configure which routes the middleware should run on
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public folder
-     */
-    '/((?!_next/static|_next/image|favicon.ico|.*\\..*|public/).*)',
+    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
+    '/(api|trpc)(.*)',
   ],
 }

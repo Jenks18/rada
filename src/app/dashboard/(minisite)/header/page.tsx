@@ -1,15 +1,47 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import { Plus, X, Loader2 } from 'lucide-react'
 import { useMiniSite } from '@/contexts/MiniSiteContext'
 import { useUser } from '@clerk/nextjs'
+import Cropper, { Area } from 'react-easy-crop'
 import {
   uploadMiniSiteCover,
   deleteMiniSiteCover,
   uploadMiniSiteLogo,
   deleteMiniSiteLogo,
 } from '@/lib/supabase/storage'
+
+/** Canvas-based crop using the pixel area from react-easy-crop */
+async function getCroppedBlob(imageSrc: string, pixelCrop: Area): Promise<Blob> {
+  const image = await createImage(imageSrc)
+  const canvas = document.createElement('canvas')
+  canvas.width = pixelCrop.width
+  canvas.height = pixelCrop.height
+  const ctx = canvas.getContext('2d')!
+  ctx.drawImage(
+    image,
+    pixelCrop.x, pixelCrop.y,
+    pixelCrop.width, pixelCrop.height,
+    0, 0,
+    pixelCrop.width, pixelCrop.height,
+  )
+  return new Promise((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (blob) resolve(blob)
+      else reject(new Error('Canvas toBlob failed'))
+    }, 'image/jpeg', 0.9)
+  })
+}
+
+function createImage(url: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    img.addEventListener('load', () => resolve(img))
+    img.addEventListener('error', (e) => reject(e))
+    img.src = url
+  })
+}
 
 export default function HeaderPage() {
   const {
@@ -27,118 +59,56 @@ export default function HeaderPage() {
   const { user } = useUser()
   const userId = user?.id ?? null
 
+  // Crop modal state
   const [tempImage, setTempImage] = useState<string | null>(null)
   const [showCropModal, setShowCropModal] = useState(false)
-  const [cropSize, setCropSize] = useState(0)
+  const [crop, setCrop] = useState({ x: 0, y: 0 })
+  const [zoom, setZoom] = useState(1)
   const [cropRatio, setCropRatio] = useState<'portrait' | 'square' | 'landscape'>('portrait')
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null)
   const [imageError, setImageError] = useState<string | null>(null)
   const [logoError, setLogoError] = useState<string | null>(null)
 
   const [isUploadingCover, setIsUploadingCover] = useState(false)
   const [isUploadingLogo, setIsUploadingLogo] = useState(false)
   const [coverUploadError, setCoverUploadError] = useState<string | null>(null)
-  
-  // Dynamic container dimensions - calculated from image aspect ratio
-  const [containerDims, setContainerDims] = useState({ width: 0, height: 0 })
-  
-  // 2D Dragging State (X and Y)
-  const [offset, setOffset] = useState({ x: 0, y: 0 })
-  const [isDragging, setIsDragging] = useState(false)
-  
-  const dragStartRef = useRef<{ x: number, y: number }>({ x: 0, y: 0 })
-  const initialOffsetRef = useRef<{ x: number, y: number }>({ x: 0, y: 0 })
+
   const fileInputRef = useRef<HTMLInputElement>(null)
   const logoInputRef = useRef<HTMLInputElement>(null)
-  // Keep a ref to the selected logo File so we can upload the original
   const logoFileRef = useRef<File | null>(null)
 
-  // Container max dim — image is fit inside this preserving its aspect ratio
-  const MAX_CONTAINER_SIZE = 577
-
-  // Max crop-box dimension (each side capped at this)
-  const MAX_CROP_DIM = 334
-
-  // Crop aspect ratios: portrait 4:5, square 1:1, landscape 5:4
-  const getCropAspect = () => {
+  // Aspect ratio for each mode
+  const getAspect = () => {
     if (cropRatio === 'portrait') return 4 / 5
     if (cropRatio === 'square') return 1
-    return 5 / 4 // landscape
+    return 5 / 4
   }
 
-  // Compute the crop-box that fits inside the container, capped at MAX_CROP_DIM
-  const getCropDimensions = () => {
-    const ratio = getCropAspect()
-    const availW = Math.min(containerDims.width, MAX_CROP_DIM)
-    const availH = Math.min(containerDims.height, MAX_CROP_DIM)
+  const onCropComplete = useCallback((_: Area, areaPixels: Area) => {
+    setCroppedAreaPixels(areaPixels)
+  }, [])
 
-    if (availW / availH > ratio) {
-      // constrained by height
-      return { cropW: availH * ratio, cropH: availH }
-    }
-    // constrained by width
-    return { cropW: availW, cropH: availW / ratio }
-  }
-
-  // Scale: 1 = no zoom, 2 = 2× zoom
-  const scale = 1 + (cropSize / 100)
-
-  // Reset drag position when ratio changes
-  useEffect(() => {
-    setOffset({ x: 0, y: 0 })
-  }, [cropRatio])
-
-  // Size the container to match image aspect ratio (larger dim → MAX_CONTAINER_SIZE)
-  const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
-    const { naturalWidth, naturalHeight } = e.currentTarget
-    const aspect = naturalWidth / naturalHeight
-
-    if (naturalWidth < 512 || naturalHeight < 512) {
-      setImageError('Image too small, recommended size is 512 x 512 px')
-    } else {
-      setImageError(null)
-    }
-
-    let calcWidth, calcHeight
-    if (naturalHeight > naturalWidth) {
-      calcHeight = MAX_CONTAINER_SIZE
-      calcWidth = calcHeight * aspect
-    } else {
-      calcWidth = MAX_CONTAINER_SIZE
-      calcHeight = calcWidth / aspect
-    }
-
-    setContainerDims({ width: calcWidth, height: calcHeight })
-    setOffset({ x: 0, y: 0 })
-    setCropSize(0)
-  }
-
-  // Clamp offset so the crop window never shows empty space
-  const clampOffset = (x: number, y: number, currentScale: number) => {
-    const { cropW, cropH } = getCropDimensions()
-    const scaledW = containerDims.width * currentScale
-    const scaledH = containerDims.height * currentScale
-
-    const maxOffsetX = Math.max(0, (scaledW - cropW) / 2)
-    const maxOffsetY = Math.max(0, (scaledH - cropH) / 2)
-
-    return {
-      x: Math.max(-maxOffsetX, Math.min(x, maxOffsetX)),
-      y: Math.max(-maxOffsetY, Math.min(y, maxOffsetY))
-    }
-  }
-
-  // Auto-clamp position when zooming or changing ratio
-  useEffect(() => {
-    setOffset(prev => clampOffset(prev.x, prev.y, scale))
-  }, [cropSize, cropRatio, scale, containerDims])
+  // Zoom slider mapped to 0-100 range
+  const zoomPercent = Math.round(((zoom - 1) / 2) * 100) // zoom 1-3 → 0-100
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (file) {
       const reader = new FileReader()
       reader.onload = (e) => {
-        setTempImage(e.target?.result as string)
-        setShowCropModal(true)
+        const img = new Image()
+        img.onload = () => {
+          if (img.naturalWidth < 512 || img.naturalHeight < 512) {
+            setImageError('Image too small, recommended size is 512 x 512 px')
+          } else {
+            setImageError(null)
+          }
+          setTempImage(e.target?.result as string)
+          setCrop({ x: 0, y: 0 })
+          setZoom(1)
+          setShowCropModal(true)
+        }
+        img.src = e.target?.result as string
       }
       reader.readAsDataURL(file)
     }
@@ -148,68 +118,26 @@ export default function HeaderPage() {
     fileInputRef.current?.click()
   }
 
-  const handleCropDone = () => {
-    if (!tempImage || containerDims.width === 0) return
+  const handleCropDone = async () => {
+    if (!tempImage || !croppedAreaPixels) return
     if (!userId) {
       setCoverUploadError('You must be signed in to upload images.')
       return
     }
 
-    const img = new Image()
-    img.onload = () => {
-      const { cropW, cropH } = getCropDimensions()
-      const containerW = containerDims.width
-      const containerH = containerDims.height
-
-      // Crop window position (centered in container)
-      const cropLeft = (containerW - cropW) / 2
-      const cropTop  = (containerH - cropH) / 2
-
-      // Inverse CSS transform (translate then scale from center)
-      const cx = containerW / 2
-      const cy = containerH / 2
-      const imgLeft  = cx + (cropLeft - cx - offset.x) / scale
-      const imgTop   = cy + (cropTop  - cy - offset.y) / scale
-      const imgCropW = cropW / scale
-      const imgCropH = cropH / scale
-
-      // Map container coords → natural image pixels
-      const scaleX = img.naturalWidth  / containerW
-      const scaleY = img.naturalHeight / containerH
-
-      const canvas = document.createElement('canvas')
-      canvas.width  = Math.round(cropW)
-      canvas.height = Math.round(cropH)
-
-      const ctx = canvas.getContext('2d')
-      if (!ctx) return
-
-      ctx.drawImage(
-        img,
-        imgLeft * scaleX, imgTop * scaleY,
-        imgCropW * scaleX, imgCropH * scaleY,
-        0, 0,
-        canvas.width, canvas.height
-      )
-
-      // Convert to Blob and upload to Supabase Storage
-      canvas.toBlob(async (blob) => {
-        if (!blob) return
-        setIsUploadingCover(true)
-        setCoverUploadError(null)
-        try {
-          const url = await uploadMiniSiteCover(userId, blob)
-          setCoverImage(url)
-          setShowCropModal(false)
-          setTempImage(null)
-        } catch {
-          setCoverUploadError('Upload failed — please try again.')
-        } finally {
-          setIsUploadingCover(false)
-        }
-      }, 'image/jpeg', 0.9)
+    setIsUploadingCover(true)
+    setCoverUploadError(null)
+    try {
+      const blob = await getCroppedBlob(tempImage, croppedAreaPixels)
+      const url = await uploadMiniSiteCover(userId, blob)
+      setCoverImage(url)
+      setShowCropModal(false)
+      setTempImage(null)
+    } catch {
+      setCoverUploadError('Upload failed — please try again.')
+    } finally {
+      setIsUploadingCover(false)
     }
-    img.src = tempImage
   }
 
   const handleCropCancel = () => {
@@ -221,7 +149,6 @@ export default function HeaderPage() {
     setCoverImage(null)
     if (fileInputRef.current) fileInputRef.current.value = ''
     if (userId) {
-      // Best-effort delete — don't block the UI on it
       deleteMiniSiteCover(userId).catch(() => null)
     }
   }
@@ -235,7 +162,6 @@ export default function HeaderPage() {
       return
     }
 
-    // Read as data URL only to validate dimensions
     const reader = new FileReader()
     reader.onload = (e) => {
       const img = new Image()
@@ -261,7 +187,6 @@ export default function HeaderPage() {
       }
       img.src = e.target?.result as string
     }
-    // Save file ref before the async gap
     logoFileRef.current = file
     reader.readAsDataURL(file)
   }
@@ -278,35 +203,6 @@ export default function HeaderPage() {
     if (userId) {
       deleteMiniSiteLogo(userId).catch(() => null)
     }
-  }
-
-  const handleMouseDown = (e: React.MouseEvent | React.TouchEvent) => {
-    setIsDragging(true)
-    
-    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
-    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY
-    
-    dragStartRef.current = { x: clientX, y: clientY }
-    initialOffsetRef.current = { ...offset }
-  }
-
-  const handleMouseMove = (e: React.MouseEvent | React.TouchEvent) => {
-    if (!isDragging) return
-    
-    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
-    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY
-    
-    const deltaX = clientX - dragStartRef.current.x
-    const deltaY = clientY - dragStartRef.current.y
-    
-    const rawX = initialOffsetRef.current.x + deltaX
-    const rawY = initialOffsetRef.current.y + deltaY
-
-    setOffset(clampOffset(rawX, rawY, scale))
-  }
-
-  const handleMouseUp = () => {
-    setIsDragging(false)
   }
 
   return (
@@ -530,24 +426,9 @@ export default function HeaderPage() {
         </div>
       </div>
 
-      {/* Hidden image to calculate dimensions */}
-      {tempImage && (
-        <img 
-          src={tempImage} 
-          onLoad={handleImageLoad}
-          className="hidden fixed -z-50"
-          alt="dimension calculator" 
-        />
-      )}
-
       {/* Crop Image Modal */}
-      {showCropModal && tempImage && containerDims.width > 0 && (
-        <div 
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto"
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
-          onTouchEnd={handleMouseUp}
-        >
+      {showCropModal && tempImage && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
           <div className="bg-white rounded-xl shadow-2xl w-full my-auto" style={{ maxWidth: '625px' }}>
             {/* Modal Header */}
             <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between bg-white">
@@ -562,83 +443,52 @@ export default function HeaderPage() {
 
             {/* Modal Body */}
             <div className="p-6">
-              {/* Image size warning */}
               {imageError && (
                 <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-800">
                   {imageError}
                 </div>
               )}
-              
-              {/* Image Preview with Crop Overlay */}
-              <div 
-                className={`relative overflow-hidden rounded-lg shadow-sm mx-auto select-none mb-6 ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
-                style={{ 
-                  width: `${containerDims.width}px`, 
-                  height: `${containerDims.height}px`,
-                  backgroundColor: '#1a1a1a'
-                }}
-                onMouseDown={handleMouseDown}
-                onMouseMove={handleMouseMove}
-                onTouchStart={handleMouseDown}
-                onTouchMove={handleMouseMove}
-              >
-                {/* Single image (the one being moved) */}
-                <img 
-                  src={tempImage} 
-                  alt="Crop preview"
-                  draggable={false}
+
+              {/* react-easy-crop container */}
+              <div className="relative w-full mx-auto mb-6 rounded-lg overflow-hidden" style={{ height: '350px' }}>
+                <Cropper
+                  image={tempImage}
+                  crop={crop}
+                  zoom={zoom}
+                  aspect={getAspect()}
+                  onCropChange={setCrop}
+                  onZoomChange={setZoom}
+                  onCropComplete={onCropComplete}
+                  minZoom={1}
+                  maxZoom={3}
+                  objectFit="contain"
                   style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                    transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})`,
-                    willChange: 'transform',
-                    pointerEvents: 'none'
-                  }}
-                />
-                
-                {/* The shadow overlay trick - creates dimmed background around crop window */}
-                <div 
-                  className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none border-4 border-white"
-                  style={{
-                    width: `${getCropDimensions().cropW}px`,
-                    height: `${getCropDimensions().cropH}px`,
-                    boxShadow: '0 0 0 9999px rgba(107, 114, 128, 0.75)'
+                    containerStyle: { borderRadius: '8px', background: '#1a1a1a' },
+                    cropAreaStyle: { border: '4px solid white' },
                   }}
                 />
               </div>
 
-
               {/* Zoom Slider */}
               <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-700 mb-2">Zoom</label>
-                
-                {/* Custom Slider Container */}
                 <div className="relative h-6 flex items-center select-none touch-none">
-                  
-                  {/* 1. The Rail (Background Line) */}
                   <div className="absolute w-full h-1 bg-gray-200 rounded-full"></div>
-                  
-                  {/* 2. The Track (Active Progress Line) */}
-                  <div 
+                  <div
                     className="absolute h-1 bg-black rounded-full"
-                    style={{ width: `${cropSize}%` }}
+                    style={{ width: `${zoomPercent}%` }}
                   ></div>
-                  
-                  {/* 3. The Knob (Handle) */}
-                  <div 
+                  <div
                     className="absolute h-4 w-4 bg-white border border-gray-300 shadow-sm rounded-full cursor-grab"
-                    style={{ left: `${cropSize}%`, transform: 'translateX(-50%)' }}
+                    style={{ left: `${zoomPercent}%`, transform: 'translateX(-50%)' }}
                   ></div>
-
-                  {/* 4. The Interactive Input (Invisible Overlay) */}
                   <input
                     type="range"
-                    min="0"
-                    max="100"
-                    step="1"
-                    value={cropSize}
-                    onChange={(e) => setCropSize(Number(e.target.value))}
+                    min="1"
+                    max="3"
+                    step="0.01"
+                    value={zoom}
+                    onChange={(e) => setZoom(Number(e.target.value))}
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                   />
                 </div>

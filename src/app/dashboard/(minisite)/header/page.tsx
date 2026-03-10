@@ -5,12 +5,6 @@ import { Plus, X, Loader2 } from 'lucide-react'
 import { useMiniSite } from '@/contexts/MiniSiteContext'
 import { useUser } from '@clerk/nextjs'
 import Cropper, { Area } from 'react-easy-crop'
-import {
-  uploadMiniSiteCover,
-  deleteMiniSiteCover,
-  uploadMiniSiteLogo,
-  deleteMiniSiteLogo,
-} from '@/lib/supabase/storage'
 
 /** Canvas-based crop using the pixel area from react-easy-crop */
 async function getCroppedBlob(imageSrc: string, pixelCrop: Area): Promise<Blob> {
@@ -129,12 +123,22 @@ export default function HeaderPage() {
     setCoverUploadError(null)
     try {
       const blob = await getCroppedBlob(tempImage, croppedAreaPixels)
-      const url = await uploadMiniSiteCover(userId, blob)
-      setCoverImage(url)
+      const formData = new FormData()
+      formData.append('file', blob, 'cover.jpg')
+      const res = await fetch('/api/minisite/upload-cover', {
+        method: 'POST',
+        body: formData,
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || 'Upload failed')
+      setCoverImage(json.url)
       setShowCropModal(false)
       setTempImage(null)
-    } catch {
-      setCoverUploadError('Upload failed — please try again.')
+    } catch (err) {
+      console.error('Cover upload error:', err)
+      setCoverUploadError(
+        err instanceof Error ? err.message : 'Upload failed — please try again.'
+      )
     } finally {
       setIsUploadingCover(false)
     }
@@ -148,9 +152,7 @@ export default function HeaderPage() {
   const handleRemoveImage = async () => {
     setCoverImage(null)
     if (fileInputRef.current) fileInputRef.current.value = ''
-    if (userId) {
-      deleteMiniSiteCover(userId).catch(() => null)
-    }
+    fetch('/api/minisite/upload-cover', { method: 'DELETE' }).catch(() => null)
   }
 
   const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -177,8 +179,15 @@ export default function HeaderPage() {
         setLogoError(null)
         setIsUploadingLogo(true)
         try {
-          const url = await uploadMiniSiteLogo(userId, file)
-          setLogoImage(url)
+          const formData = new FormData()
+          formData.append('file', file)
+          const res = await fetch('/api/minisite/upload-logo', {
+            method: 'POST',
+            body: formData,
+          })
+          const json = await res.json()
+          if (!res.ok) throw new Error(json.error || 'Upload failed')
+          setLogoImage(json.url)
         } catch {
           setLogoError('Upload failed — please try again.')
         } finally {
@@ -200,9 +209,7 @@ export default function HeaderPage() {
     setLogoError(null)
     logoFileRef.current = null
     if (logoInputRef.current) logoInputRef.current.value = ''
-    if (userId) {
-      deleteMiniSiteLogo(userId).catch(() => null)
-    }
+    fetch('/api/minisite/upload-logo', { method: 'DELETE' }).catch(() => null)
   }
 
   return (

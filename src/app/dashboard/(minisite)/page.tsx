@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Plus, Music, Youtube, Mail, Calendar, Link as LinkIcon, Trash2, GripVertical } from 'lucide-react'
-import { useMiniSite } from '@/contexts/MiniSiteContext'
+import { useMiniSite, Module } from '@/contexts/MiniSiteContext'
 
 export default function DashboardPage() {
   const router = useRouter()

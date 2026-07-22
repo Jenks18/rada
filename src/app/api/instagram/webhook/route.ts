@@ -49,7 +49,9 @@ export async function POST(req: NextRequest) {
     return new NextResponse('OK', { status: 200 })
   }
 
-  console.log('[instagram/webhook] received entries:', JSON.stringify(payload.entry, null, 2))
+  // Received entries — log only inbound (non-echo) events to reduce noise
+  const inboundCount = payload.entry.reduce((n, e) => n + (e.messaging?.filter(m => !m.message?.is_echo).length ?? 0), 0)
+  console.log(`[instagram/webhook] received ${inboundCount} inbound event(s)`)
 
   // Await processing — Vercel terminates the function after the response is sent,
   // so fire-and-forget loses the work. Meta allows up to 20s for a response.
@@ -71,12 +73,12 @@ async function processEntries(entries: WebhookEntry[]) {
     const igUserId = entry.id
     const messagingEvents = entry.messaging ?? []
 
-    console.log(`[instagram/webhook] entry igUserId=${igUserId} events=${messagingEvents.length}`)
+  console.log(`[instagram/webhook] entry igUserId=${igUserId} inbound events=${messagingEvents.filter(e => !e.message?.is_echo).length}`)
 
     for (const event of messagingEvents) {
       const msg = event.message
       if (!msg || msg.is_echo) {
-        console.log('[instagram/webhook] skipping echo or missing message')
+        // Echo = Instagram confirming our own outgoing AI reply was delivered — skip
         continue
       }
 

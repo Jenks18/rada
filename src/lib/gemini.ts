@@ -42,7 +42,7 @@ Do not include quotes, labels, or any preamble — just the reply text.`
         },
       ],
       generationConfig: {
-        maxOutputTokens: 150,
+        maxOutputTokens: 300,
         temperature: 0.85,
       },
     }),

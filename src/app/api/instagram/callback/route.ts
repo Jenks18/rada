@@ -12,7 +12,8 @@ const supabase = createClient(
 // Exchanges the code for tokens and stores them in the DB.
 export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl
-  const code = searchParams.get('code')
+  // Meta appends #_ to the code — strip it
+  const code = (searchParams.get('code') ?? '').replace(/#_$/, '') || null
   const state = searchParams.get('state')
   const error = searchParams.get('error')
 

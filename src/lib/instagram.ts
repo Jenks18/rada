@@ -44,7 +44,10 @@ export async function exchangeCodeForToken(code: string): Promise<{
     throw new Error(`Instagram token exchange failed: ${err}`)
   }
 
-  const { access_token: shortToken, user_id } = await shortRes.json()
+  const shortJson = await shortRes.json()
+  // Meta wraps the token in a data array
+  const shortData = Array.isArray(shortJson?.data) ? shortJson.data[0] : shortJson
+  const { access_token: shortToken, user_id } = shortData
 
   // Step 2: long-lived token
   const longRes = await fetch(

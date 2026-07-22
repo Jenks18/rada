@@ -24,6 +24,7 @@ import {
   Puzzle,
   SlidersHorizontal,
   Gift,
+  Instagram,
 } from 'lucide-react'
 import { MiniSiteProvider } from '@/contexts/MiniSiteContext'
 
@@ -82,6 +83,7 @@ export default function DashboardLayout({
             { title: 'Credits', href: '/dashboard/settings/credits', icon: Gift },
             { title: 'Team Members', href: '/dashboard/settings/team', icon: Users },
             { title: 'Integrations', href: '/dashboard/settings/integrations', icon: Puzzle },
+            { title: 'Instagram DMs', href: '/dashboard/settings/instagram', icon: Instagram },
             { title: 'Advanced Settings', href: '/dashboard/settings/advanced', icon: SlidersHorizontal },
           ]
         },

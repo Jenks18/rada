@@ -45,8 +45,11 @@ export async function POST(req: NextRequest) {
   }
 
   if (payload.object !== 'instagram') {
+    console.log('[instagram/webhook] non-instagram object:', payload.object)
     return new NextResponse('OK', { status: 200 })
   }
+
+  console.log('[instagram/webhook] received entries:', JSON.stringify(payload.entry, null, 2))
 
   // Process each entry asynchronously (don't block the 200 response)
   processEntries(payload.entry).catch((err) =>
@@ -65,18 +68,23 @@ async function processEntries(entries: WebhookEntry[]) {
     const igUserId = entry.id
     const messagingEvents = entry.messaging ?? []
 
+    console.log(`[instagram/webhook] entry igUserId=${igUserId} events=${messagingEvents.length}`)
+
     for (const event of messagingEvents) {
-      // Only handle story replies (DMs with a story context)
       const msg = event.message
-      if (!msg || msg.is_echo) continue
+      if (!msg || msg.is_echo) {
+        console.log('[instagram/webhook] skipping echo or missing message')
+        continue
+      }
 
       const isStoryReply = !!msg.reply_to?.story
-      if (!isStoryReply) continue
-
       const senderIgsid = event.sender.id
       const fanText = msg.text ?? ''
 
-      await handleStoryReply({ igUserId, senderIgsid, fanText })
+      console.log(`[instagram/webhook] message from=${senderIgsid} isStoryReply=${isStoryReply} text="${fanText}"`)
+
+      // Reply to story replies AND direct DMs (for testing; story-only filter can be re-enabled later)
+      await handleStoryReply({ igUserId, senderIgsid, fanText, isStoryReply })
     }
   }
 }
@@ -85,19 +93,26 @@ async function handleStoryReply({
   igUserId,
   senderIgsid,
   fanText,
+  isStoryReply,
 }: {
   igUserId: string
   senderIgsid: string
   fanText: string
+  isStoryReply: boolean
 }) {
   // Look up the artist's connection by their IG user ID
-  const { data: conn } = await supabase
+  const { data: conn, error: connErr } = await supabase
     .from('instagram_connections')
     .select('user_id, access_token, auto_reply_enabled, custom_system_prompt')
     .eq('ig_user_id', igUserId)
     .maybeSingle()
 
-  if (!conn || !conn.auto_reply_enabled) return
+  console.log(`[instagram/webhook] DB lookup igUserId=${igUserId} found=${!!conn} err=${connErr?.message}`)
+
+  if (!conn || !conn.auto_reply_enabled) {
+    console.log('[instagram/webhook] no connection or auto-reply disabled, skipping')
+    return
+  }
 
   // Get the artist's display name for the Gemini prompt
   const { data: profile } = await supabase

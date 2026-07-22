@@ -83,20 +83,23 @@ export async function sendInstagramReply(
   text: string,
   accessToken: string
 ): Promise<void> {
-  const res = await fetch(`${IG_API}/me/messages`, {
+  // access_token must be a query param, not in the JSON body
+  const url = `${IG_API}/me/messages?access_token=${encodeURIComponent(accessToken)}`
+  const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       recipient: { id: recipientIgsid },
       message: { text },
-      access_token: accessToken,
     }),
   })
 
   if (!res.ok) {
     const err = await res.text()
+    console.error('[sendInstagramReply] failed:', err)
     throw new Error(`Failed to send Instagram reply: ${err}`)
   }
+  console.log('[sendInstagramReply] sent to', recipientIgsid)
 }
 
 /** Verify a Facebook webhook signature (X-Hub-Signature-256) */

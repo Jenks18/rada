@@ -51,10 +51,13 @@ export async function POST(req: NextRequest) {
 
   console.log('[instagram/webhook] received entries:', JSON.stringify(payload.entry, null, 2))
 
-  // Process each entry asynchronously (don't block the 200 response)
-  processEntries(payload.entry).catch((err) =>
+  // Await processing — Vercel terminates the function after the response is sent,
+  // so fire-and-forget loses the work. Meta allows up to 20s for a response.
+  try {
+    await processEntries(payload.entry)
+  } catch (err) {
     console.error('[instagram/webhook] processing error:', err)
-  )
+  }
 
   return new NextResponse('EVENT_RECEIVED', { status: 200 })
 }

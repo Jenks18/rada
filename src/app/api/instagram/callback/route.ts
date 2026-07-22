@@ -39,13 +39,17 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const { accessToken, userId: igUserId, expiresAt } = await exchangeCodeForToken(code)
+    const { accessToken, expiresAt } = await exchangeCodeForToken(code)
+    // Use profile.id — this matches the entry.id in webhook payloads.
+    // The token exchange user_id is app-scoped and differs from the webhook ID.
     const profile = await getInstagramProfile(accessToken)
+
+    console.log('[instagram/callback] storing ig_user_id:', profile.id, 'username:', profile.username)
 
     await supabase.from('instagram_connections').upsert(
       {
         user_id: userId,
-        ig_user_id: igUserId,
+        ig_user_id: profile.id,
         ig_username: profile.username,
         access_token: accessToken,
         token_expires_at: expiresAt.toISOString(),
